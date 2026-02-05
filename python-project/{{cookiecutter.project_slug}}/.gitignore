@@ -1,0 +1,4 @@
+.aider*
+*.pyc
+.coverage
+docs/repo_map.md
