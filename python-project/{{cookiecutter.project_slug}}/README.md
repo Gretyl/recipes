@@ -2,23 +2,15 @@
 
 TBD defining {{cookiecutter.project_name}}
 
-## Overview
-
 ## Opinionated goals
 
 ## Solution details
 
-## Installation
-Install dependencies using `uv`:
+## First run
+Install dependencies using `uv` before enabling `direnv` with this oneliner:
 
 ```bash
-uv sync
-```
-
-If you use `direnv`, allow it once per machine:
-
-```bash
-direnv allow
+uv sync && direnv allow
 ```
 
 ## Tests
