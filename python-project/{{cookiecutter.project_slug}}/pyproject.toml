@@ -18,6 +18,7 @@ dev = [
     "pytest",
     "pytest-cov",
     "pytest-mock",
+    "pyyaml",
     "ruff",
     "mypy",
 ]
