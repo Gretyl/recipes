@@ -1,4 +1,4 @@
-from simple.main import hello_world
+from {{cookiecutter.package_name}}.main import hello_world
 
 
 def test_hello_world_returns_greeting():

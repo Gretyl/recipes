@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a Cookiecutter template from an existing repo structure.
+"""Create a Cookiecutter template from an existing repo's layout.
 
 Usage:
   python scripts/make_cookiecutter_template.py --src . --dst /tmp
@@ -23,25 +23,26 @@ import shutil
 from pathlib import Path
 
 DEFAULT_EXCLUDES = {
+    ".DS_Store",
     ".git",
-    "__pycache__",
-    ".pytest_cache",
     ".mypy_cache",
+    ".pytest_cache",
     ".ruff_cache",
     ".venv",
-    "dist",
+    "__pycache__",
     "build",
-    ".DS_Store",
+    "dist",
+    "uv.lock",
 }
 
-TEXT_EXTENSIONS = {
+TEMPLATE_EXTENSIONS = {
+    ".json",
+    ".md",
     ".py",
     ".toml",
-    ".md",
     ".txt",
-    ".yml",
     ".yaml",
-    ".json",
+    ".yml",
 }
 
 
@@ -57,8 +58,8 @@ def should_exclude(path: Path, excludes: set[str]) -> bool:
     return any(part in excludes for part in parts)
 
 
-def is_text_file(path: Path) -> bool:
-    return path.suffix in TEXT_EXTENSIONS
+def is_templatable_file(path: Path) -> bool:
+    return path.suffix in TEMPLATE_EXTENSIONS
 
 
 def safe_read_text(path: Path) -> str | None:
@@ -77,11 +78,6 @@ def main() -> int:
         default="cookiecutter-{{cookiecutter.package_name}}",
         help="Template folder name",
     )
-    parser.add_argument(
-        "--include-lock",
-        action="store_true",
-        help="Include uv.lock in template",
-    )
 
     args = parser.parse_args()
 
@@ -92,8 +88,6 @@ def main() -> int:
     package_name = detect_package_dir(src)
 
     excludes = set(DEFAULT_EXCLUDES)
-    if not args.include_lock:
-        excludes.add("uv.lock")
 
     if template_root.exists():
         raise SystemExit(f"Template folder already exists: {template_root}")
@@ -101,9 +95,9 @@ def main() -> int:
     template_root.mkdir(parents=True)
 
     cookiecutter_json = {
-        "project_name": "My Project",
-        "project_slug": "my_project",
-        "package_name": package_name or "my_package",
+        "project_name": "{{cookiecutter.project_name}}",
+        "project_slug": "{{cookiecutter.project_slug}}",
+        "package_name": "{{cookiecutter.package_name}}",
     }
 
     (template_root / "cookiecutter.json").write_text(
@@ -143,7 +137,7 @@ def main() -> int:
             src_file = root_path / file_name
             dest_file = dest_root / file_name
 
-            if is_text_file(src_file):
+            if is_templatable_file(src_file):
                 content = safe_read_text(src_file)
                 if content is None:
                     shutil.copy2(src_file, dest_file)
