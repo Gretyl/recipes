@@ -24,6 +24,8 @@ from pathlib import Path
 
 DEFAULT_EXCLUDES = {
     ".DS_Store",
+    ".coverage",
+    ".direnv",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
@@ -45,6 +47,15 @@ TEMPLATE_EXTENSIONS = {
     ".yml",
 }
 
+TEMPLATE_FILENAMES = {
+    ".envrc",
+    ".gitattributes",
+    ".gitignore",
+    "Dockerfile",
+    "Makefile",
+    "Procfile",
+}
+
 
 def detect_package_dir(src: Path) -> str | None:
     for entry in src.iterdir():
@@ -59,7 +70,7 @@ def should_exclude(path: Path, excludes: set[str]) -> bool:
 
 
 def is_templatable_file(path: Path) -> bool:
-    return path.suffix in TEMPLATE_EXTENSIONS
+    return path.suffix in TEMPLATE_EXTENSIONS or path.name in TEMPLATE_FILENAMES
 
 
 def safe_read_text(path: Path) -> str | None:
@@ -75,17 +86,24 @@ def main() -> int:
     parser.add_argument("--dst", required=True, help="Destination directory")
     parser.add_argument(
         "--template-name",
-        default="cookiecutter-retirement",
-        help="Template folder name",
+        default=None,
+        help="Template folder name (default: cookiecutter-<project_slug>)",
     )
 
     args = parser.parse_args()
 
     src = Path(args.src).resolve()
     dst_root = Path(args.dst).resolve()
-    template_root = dst_root / args.template_name
 
     package_name = detect_package_dir(src)
+
+    # Derive template variables from the source project
+    project_slug = src.name
+    project_name = project_slug.replace("-", " ").replace("_", " ").title()
+    pkg = package_name or project_slug.replace("-", "_")
+
+    template_name = args.template_name or f"cookiecutter-{project_slug}"
+    template_root = dst_root / template_name
 
     excludes = set(DEFAULT_EXCLUDES)
 
@@ -95,9 +113,9 @@ def main() -> int:
     template_root.mkdir(parents=True)
 
     cookiecutter_json = {
-        "project_name": "{{cookiecutter.project_name}}",
-        "project_slug": "{{cookiecutter.project_slug}}",
-        "package_name": "{{cookiecutter.package_name}}",
+        "project_name": project_name,
+        "project_slug": project_slug,
+        "package_name": pkg,
     }
 
     (template_root / "cookiecutter.json").write_text(
@@ -155,6 +173,22 @@ def main() -> int:
                     content = re.sub(
                         r'(name\s*=\s*)"[^"]+"',
                         r'\1"{{cookiecutter.project_slug}}"',
+                        content,
+                        count=1,
+                    )
+                    # Template the description field
+                    content = re.sub(
+                        r'(description\s*=\s*)"[^"]+"',
+                        r'\1"My take on {{cookiecutter.project_name}}"',
+                        content,
+                        count=1,
+                    )
+
+                # Replace project_name in README heading
+                if src_file.name == "README.md":
+                    content = re.sub(
+                        r"^#\s+.+",
+                        "# {{cookiecutter.package_name}}",
                         content,
                         count=1,
                     )
