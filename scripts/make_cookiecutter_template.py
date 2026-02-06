@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pathspec"]
+# ///
 """Create a Cookiecutter template from an existing repo's layout.
 
 Usage:
@@ -21,6 +25,8 @@ import os
 import re
 import shutil
 from pathlib import Path
+
+import pathspec
 
 DEFAULT_EXCLUDES = {
     ".DS_Store",
@@ -80,6 +86,41 @@ def safe_read_text(path: Path) -> str | None:
         return None
 
 
+def load_gitignore_spec(src: Path) -> pathspec.PathSpec | None:
+    """Parse .gitignore into a PathSpec matcher."""
+    gitignore = src / ".gitignore"
+    if not gitignore.exists():
+        return None
+    return pathspec.PathSpec.from_lines(
+        "gitwildmatch", gitignore.read_text().splitlines()
+    )
+
+
+def load_gitattributes_binaries(src: Path) -> set[str]:
+    """Read .gitattributes and return patterns marked as binary."""
+    ga = src / ".gitattributes"
+    binaries: set[str] = set()
+    if not ga.exists():
+        return binaries
+    for line in ga.read_text().splitlines():
+        parts = line.split()
+        if len(parts) >= 2 and "binary" in parts[1:]:
+            binaries.add(parts[0])
+    return binaries
+
+
+def is_binary_by_gitattributes(
+    rel_path: str, binary_patterns: set[str]
+) -> bool:
+    """Check if a relative path matches any .gitattributes binary pattern."""
+    for pattern in binary_patterns:
+        if pathspec.PathSpec.from_lines("gitwildmatch", [pattern]).match_file(
+            rel_path
+        ):
+            return True
+    return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create a Cookiecutter template")
     parser.add_argument("--src", default=".", help="Source repo root")
@@ -106,6 +147,12 @@ def main() -> int:
     template_root = dst_root / template_name
 
     excludes = set(DEFAULT_EXCLUDES)
+
+    # Load .gitignore patterns for additional exclusions
+    gitignore_spec = load_gitignore_spec(src)
+
+    # Load .gitattributes binary markers
+    binary_patterns = load_gitattributes_binaries(src)
 
     if template_root.exists():
         raise SystemExit(f"Template folder already exists: {template_root}")
@@ -135,6 +182,13 @@ def main() -> int:
         if rel_root == Path("."):
             rel_root = Path()
 
+        # Check gitignore for directory exclusion
+        if gitignore_spec and rel_root != Path():
+            rel_root_str = str(rel_root) + "/"
+            if gitignore_spec.match_file(rel_root_str):
+                dirs.clear()
+                continue
+
         # Map package directory to cookiecutter variable
         rel_parts = []
         for part in rel_root.parts:
@@ -147,15 +201,39 @@ def main() -> int:
         dest_root.mkdir(parents=True, exist_ok=True)
 
         # Prune excluded dirs
-        dirs[:] = [d for d in dirs if not should_exclude(root_path / d, excludes)]
+        dirs[:] = [
+            d
+            for d in dirs
+            if not should_exclude(root_path / d, excludes)
+            and not (
+                gitignore_spec
+                and gitignore_spec.match_file(
+                    str((rel_root / d) if rel_root != Path() else Path(d)) + "/"
+                )
+            )
+        ]
 
         for file_name in files:
             if file_name in excludes:
                 continue
+
             src_file = root_path / file_name
+            rel_file = (
+                str(rel_root / file_name)
+                if rel_root != Path()
+                else file_name
+            )
+
+            # Check gitignore for file exclusion
+            if gitignore_spec and gitignore_spec.match_file(rel_file):
+                continue
+
             dest_file = dest_root / file_name
 
-            if is_templatable_file(src_file):
+            # Check if file is marked binary in .gitattributes
+            file_is_binary = is_binary_by_gitattributes(rel_file, binary_patterns)
+
+            if not file_is_binary and is_templatable_file(src_file):
                 content = safe_read_text(src_file)
                 if content is None:
                     shutil.copy2(src_file, dest_file)
