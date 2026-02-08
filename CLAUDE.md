@@ -16,7 +16,7 @@ A collection of Cookiecutter templates, tooling for scaffolding Python projects,
   - `make_cookiecutter_template.py` — converts an existing Python repo into a new Cookiecutter template
   - `meld_makefiles.py` — merge Makefile targets
 - `tests/` — pytest test suite
-- `docs/` — project documentation (spec.md, repo_map.md)
+- `docs/` — project documentation (spec.md)
 
 ## Key Commands
 
@@ -48,7 +48,6 @@ make check     # ruff check --fix
 make format    # ruff format
 make mypy      # mypy after format+check
 make clean     # remove build/cache/venv/lock artifacts
-make repo_map  # regenerate docs/repo_map.md (requires files-to-prompt, ttok)
 ```
 
 ## Template Conventions

@@ -1,6 +1,8 @@
-.aider*
 *.pyc
+.aider*
+.claude/
 .coverage
 .direnv
-docs/repo_map.md
+
+# baked cookiecutter output used for manual template testing
 temp/

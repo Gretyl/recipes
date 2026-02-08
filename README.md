@@ -39,5 +39,4 @@ make check     # ruff check --fix
 make format    # ruff format
 make mypy      # mypy after format+check
 make clean     # remove build/cache/venv/lock artifacts
-make repo_map  # regenerate docs/repo_map.md
 ```
