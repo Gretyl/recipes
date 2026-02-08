@@ -1,0 +1,6 @@
+.aider*
+*.pyc
+.coverage
+.direnv
+docs/repo_map.md
+temp/

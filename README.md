@@ -1,51 +1,43 @@
-# Cookiecutter Templates
+# Recipes
 
-This repo stores a ready-to-use Cookiecutter template and a script to generate new
-templates from an existing project structure.
+Cookiecutter templates and tooling for scaffolding Python projects.
 
-## Creating new projects using `cookiecutter`
-
-The baked template lives in `python-project/`. Use `cookiecutter` to create a
-fresh project:
+## Quickstart
 
 ```bash
-cookiecutter /Users/smshaner/Sandbox/Coding/Python/python-template/python-project
+uv sync && direnv allow
 ```
 
-Cookiecutter will prompt for:
-- `project_name`
-- `project_slug`
-- `package_name`
+## Repository Layout
 
-To choose a destination folder:
+- `cookbook/` — Cookiecutter templates
+  - `python-project/` — uv-managed Python project template (ruff, mypy, pytest, direnv)
+- `recipes/` — Python package (smoke-test baseline)
+- `scripts/` — standalone tooling
+  - `make_cookiecutter_template.py` — convert an existing repo into a Cookiecutter template
+  - `meld_makefiles.py` — merge Makefile targets
+- `tests/` — pytest test suite
+- `docs/` — project documentation
+
+## Creating a project from the template
 
 ```bash
-cookiecutter /Users/smshaner/Sandbox/Coding/Python/python-template/python-project \
-  --output-dir /path/to/projects
+cookiecutter cookbook/python-project/
 ```
 
-## Creating new templates for various project types
-
-Use the helper script to turn a source repo into a Cookiecutter template.
+## Creating a new template from an existing project
 
 ```bash
-python scripts/make_cookiecutter_template.py --src /path/to/source --dst /path/to/output
+python scripts/make_cookiecutter_template.py --src /path/to/repo --dst /path/to/output
 ```
 
-Notes:
-- The template is created at `--dst/<template-name>` (default name is
-  `cookiecutter-retirement`).
-- The script detects the top-level Python package directory (first folder with
-  `__init__.py`) and templates it as `{{cookiecutter.package_name}}`.
-- Text files have package references and the `pyproject.toml` project name templated.
-
-Optional flags:
+## Makefile targets
 
 ```bash
-python scripts/make_cookiecutter_template.py \
-  --src /path/to/source \
-  --dst /path/to/output \
-  --template-name my-template \
-  --include-lock
+make test      # ruff check --fix, ruff format, then pytest --doctest-modules --cov
+make check     # ruff check --fix
+make format    # ruff format
+make mypy      # mypy after format+check
+make clean     # remove build/cache/venv/lock artifacts
+make repo_map  # regenerate docs/repo_map.md
 ```
-

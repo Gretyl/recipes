@@ -109,14 +109,10 @@ def load_gitattributes_binaries(src: Path) -> set[str]:
     return binaries
 
 
-def is_binary_by_gitattributes(
-    rel_path: str, binary_patterns: set[str]
-) -> bool:
+def is_binary_by_gitattributes(rel_path: str, binary_patterns: set[str]) -> bool:
     """Check if a relative path matches any .gitattributes binary pattern."""
     for pattern in binary_patterns:
-        if pathspec.PathSpec.from_lines("gitwildmatch", [pattern]).match_file(
-            rel_path
-        ):
+        if pathspec.PathSpec.from_lines("gitwildmatch", [pattern]).match_file(rel_path):
             return True
     return False
 
@@ -218,11 +214,7 @@ def main() -> int:
                 continue
 
             src_file = root_path / file_name
-            rel_file = (
-                str(rel_root / file_name)
-                if rel_root != Path()
-                else file_name
-            )
+            rel_file = str(rel_root / file_name) if rel_root != Path() else file_name
 
             # Check gitignore for file exclusion
             if gitignore_spec and gitignore_spec.match_file(rel_file):
