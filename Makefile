@@ -10,7 +10,7 @@ help:
 	@printf "%-12s %s\n" "test" "Run tests with coverage after check and format."
 
 # Define the directories to be checked and tested
-PYTHON_DIRS = recipes/ tests/
+PYTHON_DIRS = recipes/ recipes_cli/ tests/
 
 # Clean up .pyc files by finding and deleting them in specified directories
 clean:
@@ -33,7 +33,7 @@ clean:
 
 test: check format
 	@echo "🧪 Running tests with coverage..."
-	@pytest --doctest-modules --cov=recipes -v $(PYTHON_DIRS)
+	@pytest --doctest-modules --cov=recipes --cov=recipes_cli -v $(PYTHON_DIRS)
 
 check:
 	@echo "🐶 Checking code with ruff (fixing issues)..."

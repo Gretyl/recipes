@@ -1,0 +1,1 @@
+"""Recipes CLI terminal interface."""
