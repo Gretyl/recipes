@@ -2,22 +2,38 @@
 
 Cookiecutter templates and tooling for scaffolding Python projects.
 
+## Available recipes
+
+<!--[[[cog
+import pathlib
+
+cookbook = pathlib.Path("cookbook")
+templates = sorted(
+    d.name for d in cookbook.iterdir()
+    if d.is_dir() and (d / "cookiecutter.json").exists()
+)
+for name in templates:
+    notes = cookbook / "notes" / f"{name}.md"
+    demo = cookbook / "demos" / f"{name}.md"
+    links = []
+    if notes.exists():
+        links.append(f"[notes](cookbook/notes/{name}.md)")
+    if demo.exists():
+        links.append(f"[demo](cookbook/demos/{name}.md)")
+    if links:
+        print(f"* {name} ({' | '.join(links)})")
+    else:
+        print(f"* {name}")
+]]]-->
+* python-project ([notes](cookbook/notes/python-project.md) | [demo](cookbook/demos/python-project.md))
+* repo-cli ([notes](cookbook/notes/repo-cli.md) | [demo](cookbook/demos/repo-cli.md))
+<!--[[[end]]]-->
+
 ## Quickstart
 
 ```bash
 uv sync && direnv allow
 ```
-
-## Repository Layout
-
-- `cookbook/` — Cookiecutter templates
-  - `python-project/` — uv-managed Python project template (ruff, mypy, pytest, direnv)
-- `recipes/` — Python package (smoke-test baseline)
-- `scripts/` — standalone tooling
-  - `make_cookiecutter_template.py` — convert an existing repo into a Cookiecutter template
-  - `meld_makefiles.py` — merge Makefile targets
-- `tests/` — pytest test suite
-- `docs/` — project documentation
 
 ## Creating a project from the template
 

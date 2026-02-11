@@ -1,0 +1,2 @@
+# Treat uv.lock files as binary
+uv.lock binary

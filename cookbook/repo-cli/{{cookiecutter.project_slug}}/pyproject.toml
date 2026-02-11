@@ -1,0 +1,48 @@
+[project]
+name = "{{cookiecutter.project_slug}}"
+version = "0.1.0"
+description = "My take on {{cookiecutter.project_name}}"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "click",
+    "pydantic",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+{{cookiecutter.project_slug}} = "{{cookiecutter.package_name}}.tui.cli:cli"
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "pytest-mock",
+    "pyyaml",
+    "ruff",
+    "mypy",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["{{cookiecutter.package_name}}"]
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+module = "{{cookiecutter.package_name}}.*"
+ignore_missing_imports = true

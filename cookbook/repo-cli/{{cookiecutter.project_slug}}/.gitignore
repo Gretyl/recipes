@@ -1,0 +1,6 @@
+*.pyc
+.aider*
+.claude/
+.coverage
+.direnv
+dist/
