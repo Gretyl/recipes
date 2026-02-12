@@ -31,17 +31,47 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
 
+## Development standards
+
+Every CLI subcommand — both new proposals and pre-existing commands — must satisfy three requirements:
+
+1. **Red/green TDD.** Write a failing test *first* (`red`), then implement just enough code to make it pass (`green`). Tests live in `tests/test_cli.py` and use Click's `CliRunner`.
+2. **Pydantic type signatures.** Subcommand inputs and outputs that carry structured data must be expressed as Pydantic models. This gives you runtime validation, serialisation, and self-documenting schemas for free.
+3. **Clean `mypy`.** All CLI code must pass `mypy` with the strict settings defined in `pyproject.toml`. Run `make mypy` before committing.
+
 ## Adding a subcommand
+
+1. Write a failing test:
+
+```python
+# in tests/test_cli.py
+
+def test_greet_command() -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["greet", "World"])
+    assert result.exit_code == 0
+    assert "Hello, World!" in result.output
+```
+
+2. Implement the subcommand with a Pydantic model:
 
 ```python
 # in {{cookiecutter.package_name}}/tui/cli.py
+
+from pydantic import BaseModel
+
+class GreetArgs(BaseModel):
+    name: str
 
 @cli.command()
 @click.argument("name")
 def greet(name: str) -> None:
     """Greet someone by name."""
-    click.echo(f"Hello, {name}!")
+    args = GreetArgs(name=name)
+    click.echo(f"Hello, {args.name}!")
 ```
+
+3. Verify the tests pass (`make test`) and types check (`make mypy`).
 
 Then from a Makefile target:
 
