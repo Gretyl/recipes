@@ -14,7 +14,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-{{cookiecutter.project_slug}} = "{{cookiecutter.package_name}}.tui.cli:cli"
+{{cookiecutter.target_repo}} = "{{cookiecutter.package_name}}.tui.cli:cli"
 
 [dependency-groups]
 dev = [
