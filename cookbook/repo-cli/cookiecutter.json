@@ -2,5 +2,5 @@
   "project_name": "My Repo CLI",
   "target_repo": "my-repo",
   "project_slug": "{{cookiecutter.target_repo}}-cli",
-  "package_name": "{{ cookiecutter.target_repo | replace('-', '_') }}"
+  "package_name": "{{ cookiecutter.target_repo | replace('-', '_') }}_cli"
 }
