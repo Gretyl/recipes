@@ -1,9 +1,9 @@
 # CLI
 
-The `{{cookiecutter.package_name}}` package provides a repo-local command-line interface for programmatic project support. It is installed as the `{{cookiecutter.project_slug}}` console script entry point and invoked as:
+The `{{cookiecutter.package_name}}` package provides a repo-local command-line interface for programmatic project support. It is installed as the `{{cookiecutter.target_repo}}` console script entry point and invoked as:
 
 ```bash
-{{cookiecutter.project_slug}} <subcommand>
+{{cookiecutter.target_repo}} <subcommand>
 ```
 
 ## Scope
@@ -27,7 +27,7 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
     cli.py          # Click entry point (OrderedGroup)
 ```
 
-- **Entry point:** `{{cookiecutter.project_slug}} = "{{cookiecutter.package_name}}.tui.cli:cli"` (defined in `pyproject.toml`)
+- **Entry point:** `{{cookiecutter.target_repo}} = "{{cookiecutter.package_name}}.tui.cli:cli"` (defined in `pyproject.toml`)
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
 
@@ -77,7 +77,7 @@ Then from a Makefile target:
 
 ```makefile
 greet:
-	@{{cookiecutter.project_slug}} greet World
+	@{{cookiecutter.target_repo}} greet World
 ```
 
 ## Relation to Makefile
@@ -86,5 +86,5 @@ Makefile targets remain the stable developer interface (`make test`, `make check
 
 ```makefile
 example:
-	@{{cookiecutter.project_slug}} example --flag value
+	@{{cookiecutter.target_repo}} example --flag value
 ```
