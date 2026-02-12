@@ -1,6 +1,6 @@
 # Recipes
 
-Cookiecutter templates and tooling for scaffolding Python projects.
+Cookiecutter templates and tooling for scaffolding various project types.
 
 ## Available recipes
 
