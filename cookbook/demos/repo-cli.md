@@ -1,8 +1,8 @@
 # repo-cli template demo
 
-*2026-02-12T00:13:29Z*
+*2026-02-12T14:49:49Z*
 
-The repo-cli template scaffolds a Click-based CLI project targeting a specific repository. The baked package uses a `_cli` suffix by convention (`<target_repo>_cli`) so it never collides with the host repo's library package. A bundled CLI.md documents the CLI's scope as programmatic project support tooling.
+The repo-cli template scaffolds a Click-based CLI project targeting a specific repository. The baked package uses a `_cli` suffix by convention (`<target_repo>_cli`) so it never collides with the host repo's library package. A bundled CLI.md documents the CLI's scope as programmatic project support tooling, including development standards requiring red/green TDD, Pydantic type signatures, and clean `mypy`.
 
 ```bash
 rm -rf /tmp/repo-cli-demo && cookiecutter /home/user/recipes/cookbook/repo-cli --no-input --output-dir /tmp/repo-cli-demo && find /tmp/repo-cli-demo/my-repo-cli -type f | sort | sed 's|/tmp/repo-cli-demo/||'
@@ -16,7 +16,6 @@ my-repo-cli/CHANGELOG.md
 my-repo-cli/CLI.md
 my-repo-cli/Makefile
 my-repo-cli/README.md
-my-repo-cli/docs/spec.md
 my-repo-cli/my_repo_cli/tui/__init__.py
 my-repo-cli/my_repo_cli/tui/cli.py
 my-repo-cli/pyproject.toml
@@ -28,7 +27,7 @@ Note the `_cli` suffix: `my_repo_cli/` (not `my_repo/`). This is derived automat
 The CLI entry point is registered as `my-repo-cli`. Invoke it with no arguments to see help:
 
 ```bash
-PYTHONPATH=/tmp/repo-cli-demo/my-repo-cli /usr/local/bin/python -c 'from my_repo_cli.tui.cli import cli; cli()'
+PYTHONPATH=/tmp/repo-cli-demo/my-repo-cli /usr/local/bin/python3 -c 'from my_repo_cli.tui.cli import cli; cli()'
 ```
 
 ```output
@@ -47,14 +46,14 @@ Commands:
 Commands are listed alphabetically. The `help` subcommand produces the same output as bare invocation. The `hello` command is a starter subcommand:
 
 ```bash
-PYTHONPATH=/tmp/repo-cli-demo/my-repo-cli /usr/local/bin/python -c 'from my_repo_cli.tui.cli import cli; cli()' hello
+PYTHONPATH=/tmp/repo-cli-demo/my-repo-cli /usr/local/bin/python3 -c 'from my_repo_cli.tui.cli import cli; cli()' hello
 ```
 
 ```output
 Hello from my_repo_cli.tui!
 ```
 
-CLI.md documents the CLI's scope as programmatic project support, the architecture, and the Makefile delegation pattern:
+CLI.md documents the CLI's scope as programmatic project support, the architecture, development standards (red/green TDD, Pydantic type signatures, clean mypy), and the Makefile delegation pattern:
 
 ```bash
 cat /tmp/repo-cli-demo/my-repo-cli/CLI.md
@@ -94,17 +93,47 @@ my_repo_cli/
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
 
+## Development standards
+
+Every CLI subcommand — both new proposals and pre-existing commands — must satisfy three requirements:
+
+1. **Red/green TDD.** Write a failing test *first* (`red`), then implement just enough code to make it pass (`green`). Tests live in `tests/test_cli.py` and use Click's `CliRunner`.
+2. **Pydantic type signatures.** Subcommand inputs and outputs that carry structured data must be expressed as Pydantic models. This gives you runtime validation, serialisation, and self-documenting schemas for free.
+3. **Clean `mypy`.** All CLI code must pass `mypy` with the strict settings defined in `pyproject.toml`. Run `make mypy` before committing.
+
 ## Adding a subcommand
+
+1. Write a failing test:
+
+```python
+# in tests/test_cli.py
+
+def test_greet_command() -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["greet", "World"])
+    assert result.exit_code == 0
+    assert "Hello, World!" in result.output
+```
+
+2. Implement the subcommand with a Pydantic model:
 
 ```python
 # in my_repo_cli/tui/cli.py
+
+from pydantic import BaseModel
+
+class GreetArgs(BaseModel):
+    name: str
 
 @cli.command()
 @click.argument("name")
 def greet(name: str) -> None:
     """Greet someone by name."""
-    click.echo(f"Hello, {name}!")
+    args = GreetArgs(name=name)
+    click.echo(f"Hello, {args.name}!")
 ```
+
+3. Verify the tests pass (`make test`) and types check (`make mypy`).
 
 Then from a Makefile target:
 

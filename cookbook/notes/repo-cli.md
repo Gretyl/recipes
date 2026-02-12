@@ -34,7 +34,11 @@ The template now includes a `CLI.md` that documents:
 
 - The CLI's purpose as **programmatic project support** (not application logic)
 - Architecture: Click `OrderedGroup` entry point under `<package>/tui/cli.py`
-- How to add subcommands
+- **Development standards** — every subcommand (new and pre-existing) must:
+  1. Be built with **red/green TDD** (failing test first, then implementation)
+  2. Use **Pydantic type signatures** for structured data (runtime validation + self-documenting schemas)
+  3. Pass **`mypy`** cleanly with the strict settings in `pyproject.toml`
+- How to add subcommands (now includes a three-step workflow: write failing test, implement with Pydantic model, verify with `make test` and `make mypy`)
 - The delegation pattern between Makefile targets and CLI subcommands
 
 The root project's `CLI.md` is the concrete instance; the template's `CLI.md` uses `{{cookiecutter.package_name}}` and `{{cookiecutter.project_slug}}` variables so every baked project gets its own version.
