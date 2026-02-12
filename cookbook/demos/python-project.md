@@ -62,7 +62,7 @@ test         Run tests with coverage after check and format.
 make: Leaving directory '/tmp/python-project-demo/fresh-project'
 ```
 
-The pyproject.toml targets Python 3.14 with hatchling, includes click and pydantic as defaults, and enables strict mypy:
+The pyproject.toml targets Python 3.13 with hatchling, includes click and pydantic as defaults, and enables strict mypy:
 
 ```bash
 cat /tmp/python-project-demo/fresh-project/pyproject.toml
@@ -74,7 +74,7 @@ name = "fresh-project"
 version = "0.1.0"
 description = "My take on Fresh Project"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "click",
     "pydantic",
@@ -95,7 +95,7 @@ dev = [
 ]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

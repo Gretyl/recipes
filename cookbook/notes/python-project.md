@@ -12,7 +12,7 @@ The foundational Cookiecutter template for uv-managed Python projects. Every bak
 
 ## Decisions and tradeoffs
 
-- **Python 3.14 target**: forward-looking baseline; projects that need older Python can lower `requires-python` after baking.
+- **Python 3.13 target**: forward-looking baseline; projects that need older Python can lower `requires-python` after baking.
 - **Hatchling build backend**: lightweight, PEP 517-compliant, no extra config needed for simple packages.
 - **Click and Pydantic in default dependencies**: most projects end up needing a CLI entry point and structured data; including them avoids a follow-up `uv add` in almost every case.
 - **Strict mypy defaults**: catches issues early. Per-package `ignore_missing_imports` override keeps third-party stubs from blocking adoption.

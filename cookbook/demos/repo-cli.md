@@ -206,7 +206,7 @@ name = "my-repo-cli"
 version = "0.1.0"
 description = "My take on My Repo CLI"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.13"
 dependencies = [
     "click",
     "pydantic",
@@ -233,7 +233,7 @@ dev = [
 packages = ["my_repo_cli"]
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
