@@ -53,7 +53,7 @@ make clean     # remove build/cache/venv/lock artifacts
 ## Template Conventions
 
 - Generated projects use **uv** for dependency management and **direnv** for automatic venv activation (`uv sync && direnv allow`)
-- Python target is **3.14**, build backend is **hatchling**
+- Python target is **3.13**, build backend is **hatchling**
 - Dev tools: ruff (lint+format), mypy (strict mode), pytest with pytest-cov/pytest-mock
 - The `make_cookiecutter_template.py` script auto-detects the package dir (first folder with `__init__.py`) and templates it as `{{cookiecutter.package_name}}`; it also replaces the project name in `pyproject.toml`
 - Text files with extensions `.py`, `.toml`, `.md`, `.json`, `.yaml`, `.yml`, `.txt` get variable substitution; all others are copied as-is
