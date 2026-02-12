@@ -37,7 +37,7 @@ def test_help_flag() -> None:
 def test_commands_listed_alphabetically() -> None:
     runner = CliRunner()
     result = runner.invoke(cli, ["--help"])
-    output = result.output
-    hello_pos = output.index("hello")
-    help_pos = output.index("help")
+    commands_section = result.output[result.output.index("Commands:") :]
+    hello_pos = commands_section.index("hello")
+    help_pos = commands_section.index("help", hello_pos + 1)
     assert hello_pos < help_pos
