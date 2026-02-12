@@ -3,6 +3,7 @@
 .claude/
 .coverage
 .direnv
+dist/
 
 # baked cookiecutter output used for manual template testing
 temp/
