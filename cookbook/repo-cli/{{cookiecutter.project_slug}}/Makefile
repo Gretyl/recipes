@@ -34,7 +34,7 @@ clean:
 
 test: check format
 	@echo "🧪 Running tests with coverage..."
-	@pytest --doctest-modules --cov={{cookiecutter.package_name}} -v
+	@pytest --doctest-modules --cov={{cookiecutter.package_name}} -v $(PYTHON_DIRS)
 
 check:
 	@echo "🐶 Checking code with ruff (fixing issues)..."
