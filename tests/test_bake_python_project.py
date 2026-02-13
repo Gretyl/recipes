@@ -6,6 +6,7 @@ trees and file contents.
 """
 
 import pathlib
+import subprocess
 
 import pytest
 from cookiecutter.main import cookiecutter
@@ -65,6 +66,11 @@ class TestBakeDefaults:
         test_py = (baked / "tests" / "test_main.py").read_text()
         assert "from fresh_project.main import hello_world" in test_py
 
+    def test_test_has_return_annotation(self, baked: pathlib.Path) -> None:
+        """Test functions must have -> None for strict mypy."""
+        test_py = (baked / "tests" / "test_main.py").read_text()
+        assert "-> None:" in test_py
+
     def test_pyproject_name(self, baked: pathlib.Path) -> None:
         pyproject = (baked / "pyproject.toml").read_text()
         assert 'name = "fresh-project"' in pyproject
@@ -111,6 +117,7 @@ class TestBakeDefaults:
     def test_makefile_test_target(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
         assert "--cov=fresh_project" in makefile
+        assert "$(PYTHON_DIRS)" in makefile.split("test:")[1].split("\n\n")[0]
 
     def test_makefile_python_dirs(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
@@ -160,6 +167,25 @@ class TestBakeDefaults:
                 assert "{{cookiecutter." not in text, (
                     f"{p.relative_to(baked)} contains un-rendered template variable"
                 )
+
+    @pytest.mark.slow()
+    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
+        """The baked project's own test suite must pass."""
+        subprocess.run(
+            ["uv", "sync"],
+            cwd=baked,
+            check=True,
+            capture_output=True,
+        )
+        result = subprocess.run(
+            ["uv", "run", "pytest", "-x", "-q"],
+            cwd=baked,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, (
+            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
+        )
 
 
 class TestBakeCustomContext:

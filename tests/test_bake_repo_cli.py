@@ -6,6 +6,7 @@ resulting file trees and file contents.
 """
 
 import pathlib
+import subprocess
 
 import pytest
 from cookiecutter.main import cookiecutter
@@ -79,6 +80,25 @@ class TestBakeWithWorkflow:
         workflow = (baked / ".github" / "workflows" / "update-readme.yml").read_text()
         assert "demo-repo template prepare" in workflow
         assert "demo-repo template apply" in workflow
+
+    @pytest.mark.slow()
+    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
+        """The baked project's own test suite must pass."""
+        subprocess.run(
+            ["uv", "sync"],
+            cwd=baked,
+            check=True,
+            capture_output=True,
+        )
+        result = subprocess.run(
+            ["uv", "run", "pytest", "-x", "-q"],
+            cwd=baked,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, (
+            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
+        )
 
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)

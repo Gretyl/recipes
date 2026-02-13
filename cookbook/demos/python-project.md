@@ -1,6 +1,6 @@
 # python-project template demo
 
-*2026-02-13T21:12:33Z*
+*2026-02-13T22:00:58Z*
 
 The python-project template scaffolds a uv-managed Python project with ruff, mypy, pytest, and direnv support. It includes a baseline `hello_world` implementation so `make test` passes immediately after baking.
 
