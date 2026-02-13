@@ -1,14 +1,6 @@
 # {{cookiecutter.project_name}}
 
-TBD defining {{cookiecutter.project_name}}
-
-## Opinionated goals
-
-TBD
-
-## Solution details
-
-TBD
+<template placeholder>
 
 ## Setup
 

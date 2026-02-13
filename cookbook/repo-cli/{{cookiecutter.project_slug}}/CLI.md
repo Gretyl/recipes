@@ -25,11 +25,13 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
   tui/
     __init__.py
     cli.py          # Click entry point (OrderedGroup)
+    template.py     # Cog-based README template management
 ```
 
 - **Entry point:** `{{cookiecutter.target_repo}} = "{{cookiecutter.package_name}}.tui.cli:cli"` (defined in `pyproject.toml`)
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
+- **Template command:** The `template` group is defined in `template.py` and registered via `cli.add_command(template)` in `cli.py`
 
 ## Development standards
 

@@ -1,5 +1,7 @@
 import click
 
+from {{cookiecutter.package_name}}.tui.template import template
+
 
 class OrderedGroup(click.Group):
     """A Click group that lists commands in alphabetical order."""
@@ -30,6 +32,8 @@ def help(ctx: click.Context) -> None:
     if parent is not None:
         click.echo(parent.get_help())
 
+
+cli.add_command(template)
 
 if __name__ == "__main__":
     cli()

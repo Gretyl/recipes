@@ -49,3 +49,35 @@ Key framing: Makefile targets stay as the stable developer interface. The CLI su
 
 - **`test_commands_listed_alphabetically`**: The original `output.index("help")` matched `--help  Show this message and exit.` in Click's Options section before reaching the `help` command in the Commands section. Fixed to search within `result.output[result.output.index("Commands:"):]` only.
 - **`make test` pytest args**: The template's test target was missing `$(PYTHON_DIRS)` as an argument to pytest, so `--doctest-modules` only collected tests from `tests/` (via pyproject.toml's `testpaths`) and never ran doctests in the package source files. Now passes `$(PYTHON_DIRS)` to match the root project's pattern.
+
+## Template extension sync (v0.9)
+
+Ported the Cog-based README template management system from `grimoire/repo-cli` into the recipes template.
+
+### What was ported
+
+- **`template.py`** — Business logic (Pydantic models, Cog constants, apply/prepare functions) and Click command group with `apply` and `prepare` subcommands. Placed at `tui/template.py` inside the namespace package (grimoire had it flat at package root).
+- **GitHub Actions workflow** (`update-readme.yml`) — Adapted for uv: Python 3.13, `astral-sh/setup-uv@v4`, `uv pip install --system` instead of `pip install`.
+- **Post-generation hook** (`hooks/post_gen_project.py`) — Conditionally removes `.github/` when `include_github_workflow` is "no". Copied verbatim.
+- **54 template-level tests** in three files (`test_template.py`, `test_template_apply.py`, `test_template_prepare.py`) — Only import paths changed.
+- **`requirements.txt`** — CI-only dependency (`cogapp`).
+
+### Translation decisions
+
+| grimoire | recipes | reason |
+|---|---|---|
+| `{{cookiecutter.target_repo}}_cli.template` | `{{cookiecutter.package_name}}.tui.template` | Recipes uses namespace `tui/` subpackage |
+| `{{cookiecutter.target_repo}}_cli.cli` | `{{cookiecutter.package_name}}.tui.cli` | Same — all CLI code lives under `tui/` |
+| flat `template.py` at package root | `tui/template.py` | Consistent with recipes' `tui/` namespace |
+| `pip install` | `uv pip install --system` | Recipes convention: uv everywhere |
+| Python 3.12 | Python 3.13 | Recipes target |
+| `demo-repo_cli` (hyphens preserved) | `demo_repo_cli` (hyphens → underscores) | Recipes derives `package_name` via Jinja2 `replace('-', '_')` filter |
+
+### Bake test adaptations
+
+- `TEMPLATE_DIRECTORY` points to `cookbook/repo-cli` (not `repo-cli/template`).
+- `extra_context` includes `project_name` (recipes has more cookiecutter variables).
+- Output dir is `demo-repo-cli` (`project_slug`), package dir is `demo_repo_cli/tui/`.
+- File tree assertions include recipes-specific files (`.envrc`, `.gitattributes`, `CHANGELOG.md`, `Makefile`).
+- No `tests/__init__.py` assertions (recipes convention).
+- All package path assertions use `demo_repo_cli` (underscores, not hyphens).

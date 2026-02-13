@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - YYYY-MM-DD
+
+### Added
+
+- Template extension: `template.py` with `apply` and `prepare` subcommands for Cog-based README management.
+- GitHub Actions workflow option (`include_github_workflow`) with `update-readme.yml`.
+- Post-generation hook to conditionally remove `.github/` directory.
+- 54 template-level tests in baked output (test_template, test_template_apply, test_template_prepare).
+- First bake-level test suite (`tests/test_bake_repo_cli.py`).
+
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
