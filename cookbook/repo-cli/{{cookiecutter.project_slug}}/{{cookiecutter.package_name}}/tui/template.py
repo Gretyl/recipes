@@ -19,7 +19,7 @@ PLACEHOLDER: str = "<template placeholder>"
 
 # Stub template code — a no-op that produces no output when Cog processes it.
 # Replace this with real template logic for your repository.
-TEMPLATE_CODE: str = "pass"
+TEMPLATE_CODE: str = "..."
 
 
 class TemplateOutput(BaseModel):

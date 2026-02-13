@@ -110,9 +110,9 @@ class TestPrepareTemplate:
         assert result.readme_path == str(readme)
 
     def test_prepared_noop_block_restores_placeholder(self, tmp_path: Path) -> None:
-        """The no-op Cog block (pass) is correctly replaced with placeholder."""
+        """The no-op Cog block (...) is correctly replaced with placeholder."""
         readme = tmp_path / "README.md"
-        readme.write_text("<!--[[[cog\npass\n]]]-->\n<!--[[[end]]]-->")
+        readme.write_text(f"<!--[[[cog\n{TEMPLATE_CODE}\n]]]-->\n<!--[[[end]]]-->")
         result = prepare_template(readme)
         assert result.cog_block_found is True
         assert readme.read_text() == PLACEHOLDER

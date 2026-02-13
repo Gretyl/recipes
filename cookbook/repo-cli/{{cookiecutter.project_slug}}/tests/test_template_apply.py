@@ -49,7 +49,7 @@ class TestWrapWithCog:
     def test_wrap_with_noop_produces_valid_cog_block(self) -> None:
         """The wrapped stub should be a valid Cog block that produces no output."""
         result = wrap_with_cog(TEMPLATE_CODE)
-        assert result == "<!--[[[cog\npass\n]]]-->\n<!--[[[end]]]-->"
+        assert result == f"<!--[[[cog\n{TEMPLATE_CODE}\n]]]-->\n<!--[[[end]]]-->"
 
 
 class TestApplyResultModel:
@@ -123,12 +123,12 @@ class TestApplyTemplate:
         assert result.readme_path == str(readme)
 
     def test_applied_cog_block_is_noop(self, tmp_path: Path) -> None:
-        """After applying, the Cog block should contain only 'pass'."""
+        """After applying, the Cog block should contain the stub template code."""
         readme = tmp_path / "README.md"
         readme.write_text("# Title\n\n<template placeholder>\n")
         apply_template(readme)
         content = readme.read_text()
-        assert "<!--[[[cog\npass\n]]]-->" in content
+        assert f"<!--[[[cog\n{TEMPLATE_CODE}\n]]]-->" in content
 
 
 class TestApplyCLI:
