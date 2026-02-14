@@ -33,7 +33,7 @@ Note the new files: `template.py` (Cog-based README management), `update-readme.
 The CLI entry point is registered as `my-repo`. Invoke it with no arguments to see help:
 
 ```bash
-cd /tmp/repo-cli-demo/my-repo-cli && uv run my-repo help
+cd /tmp/repo-cli-demo/my-repo-cli && uv run --quiet my-repo help
 ```
 
 ```output
@@ -53,7 +53,7 @@ Commands:
 Commands are listed alphabetically. The `template` group is new in v0.9 — it manages the Cog-based README template. Invoke it without a subcommand to see the template code:
 
 ```bash
-cd /tmp/repo-cli-demo/my-repo-cli && uv run my-repo template
+cd /tmp/repo-cli-demo/my-repo-cli && uv run --quiet my-repo template
 ```
 
 ```output
@@ -118,7 +118,7 @@ make dist
 ````
 
 ```bash
-cd /tmp/repo-cli-demo/my-repo-cli && uv run my-repo template prepare && cat README.md
+cd /tmp/repo-cli-demo/my-repo-cli && uv run --quiet my-repo template prepare && cat README.md
 ```
 
 ````output
@@ -159,10 +159,10 @@ No .github/ directory — removed by post-gen hook
 The baked project includes 62 tests (5 CLI + 57 template). All pass out of the box:
 
 ```bash
-cd /tmp/repo-cli-demo/my-repo-cli && uv run pytest --tb=no -q
+cd /tmp/repo-cli-demo/my-repo-cli && uv run --quiet pytest --tb=no -q
 ```
 
 ```output
 ..............................................................           [100%]
-62 passed in 0.57s
+62 passed in 0.45s
 ```

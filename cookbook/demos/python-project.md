@@ -20,7 +20,7 @@ fresh-project/docs/spec.md
 fresh-project/fresh_project/__init__.py
 fresh-project/fresh_project/main.py
 fresh-project/pyproject.toml
-fresh-project/scripts/make_cookiecutter_template.py
+fresh-project/scripts/.gitkeep
 fresh-project/tests/test_main.py
 ```
 
@@ -55,7 +55,8 @@ make: Entering directory '/tmp/python-project-demo/fresh-project'
 Target       Description
 ------       -----------
 check        Lint and auto-fix issues with ruff.
-clean        Remove build, cache, venv, and lock artifacts.
+clean        Remove build, cache, venv, lock, and dist artifacts.
+dist         Prepare a versioned release in dist/.
 format       Format code using ruff.
 mypy         Type-check sources with mypy after format/check.
 test         Run tests with coverage after check and format.
