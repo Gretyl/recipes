@@ -50,10 +50,10 @@ python scripts/make_cookiecutter_template.py --src /path/to/repo --dst /path/to/
 ## Makefile targets
 
 ```bash
-make test      # ruff check --fix, ruff format, then pytest --doctest-modules --cov
 make check     # ruff check --fix
+make clean     # remove build/cache/venv/lock artifacts
+make dist      # validate changelog + version, build sdist+wheel
 make format    # ruff format
 make mypy      # mypy after format+check
-make dist      # validate changelog + version, build sdist+wheel
-make clean     # remove build/cache/venv/lock artifacts
+make test      # ruff check --fix, ruff format, then pytest --doctest-modules --cov
 ```
