@@ -22,12 +22,6 @@ def cli(ctx: click.Context) -> None:
 
 
 @cli.command()
-def hello() -> None:
-    """Say hello."""
-    click.echo("Hello from recipes_cli.tui!")
-
-
-@cli.command()
 @click.pass_context
 def help(ctx: click.Context) -> None:
     """Show this help message and exit."""
