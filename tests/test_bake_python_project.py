@@ -5,6 +5,7 @@ with default and custom contexts, then verify the resulting file
 trees and file contents.
 """
 
+import os
 import pathlib
 import subprocess
 
@@ -123,6 +124,21 @@ class TestBakeDefaults:
         makefile = (baked / "Makefile").read_text()
         assert "PYTHON_DIRS = fresh_project/ tests/" in makefile
 
+    def test_makefile_dist_target(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        assert "dist: test" in makefile
+        assert "uv build --out-dir dist/" in makefile
+
+    def test_makefile_dist_help_entry(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        assert '"dist"' in makefile
+        assert "Prepare a versioned release" in makefile
+
+    def test_makefile_dist_is_phony(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        phony_line = [l for l in makefile.splitlines() if l.startswith(".PHONY:")][0]
+        assert "dist" in phony_line
+
     def test_docs_spec_exists(self, baked: pathlib.Path) -> None:
         assert (baked / "docs" / "spec.md").is_file()
 
@@ -185,6 +201,85 @@ class TestBakeDefaults:
         assert result.returncode == 0, (
             f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
         )
+
+
+class TestMakeDistValidation:
+    """Verify that ``make dist`` guards work in a baked project.
+
+    The dist target depends on ``test`` (which depends on ``check`` and
+    ``format``), so running ``make dist`` end-to-end is expensive.  Instead
+    we invoke ``make -n dist`` (dry-run) to confirm wiring and then run
+    the dist recipe's shell validation directly.
+    """
+
+    GIT_ENV: dict[str, str] = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "test",
+        "GIT_COMMITTER_NAME": "test",
+        "GIT_AUTHOR_EMAIL": "t@t",
+        "GIT_COMMITTER_EMAIL": "t@t",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+    }
+
+    def _git(self, *args: str, cwd: pathlib.Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            ["git", *args],
+            cwd=cwd, check=True, capture_output=True, text=True,
+            env=self.GIT_ENV,
+        )
+
+    @pytest.fixture()
+    def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+        )
+        project = tmp_path / "fresh-project"
+        # Initialise a git repo so the dist guards can run.
+        self._git("init", cwd=project)
+        self._git("add", ".", cwd=project)
+        self._git("commit", "-m", "init", cwd=project)
+        return project
+
+    def test_dry_run_includes_dist(self, baked: pathlib.Path) -> None:
+        """``make -n dist`` should print the dist recipe (proves wiring)."""
+        result = subprocess.run(
+            ["make", "-n", "dist"],
+            cwd=baked,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+        assert "uv build" in result.stdout
+
+    def _make_dist(self, cwd: pathlib.Path) -> subprocess.CompletedProcess[str]:
+        """Run only the dist recipe, skipping its test/check/format deps."""
+        return subprocess.run(
+            ["make", "-o", "test", "-o", "check", "-o", "format", "dist"],
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            env=self.GIT_ENV,
+        )
+
+    def test_dist_fails_without_changelog_version(self, baked: pathlib.Path) -> None:
+        """dist must reject when CHANGELOG.md has no versioned entry."""
+        result = self._make_dist(baked)
+        assert result.returncode != 0
+        assert "CHANGELOG.md" in result.stdout or "CHANGELOG.md" in result.stderr
+
+    def test_dist_fails_without_tag(self, baked: pathlib.Path) -> None:
+        """dist must reject when the release tag is missing."""
+        # Write a matching CHANGELOG entry so we get past that check.
+        changelog = baked / "CHANGELOG.md"
+        changelog.write_text("# Changelog\n\n## [0.1.0] - 2026-01-01\n\n- init\n")
+        self._git("add", "CHANGELOG.md", cwd=baked)
+        self._git("commit", "-m", "changelog", cwd=baked)
+        result = self._make_dist(baked)
+        assert result.returncode != 0
+        assert "Tag" in result.stdout or "Tag" in result.stderr
 
 
 class TestBakeCustomContext:
