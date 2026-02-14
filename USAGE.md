@@ -1,6 +1,6 @@
 # recipes CLI
 
-*2026-02-14T00:00:00Z*
+*2026-02-14T04:49:21Z*
 
 The recipes CLI is the repo-local command-line interface provided by the `recipes_cli` package. It uses Click with an `OrderedGroup` that lists subcommands alphabetically. Every subcommand must be built with red/green TDD, use Pydantic type signatures for structured data, and pass `mypy` cleanly. See CLI.md for the full development standards.
 
@@ -20,55 +20,8 @@ Options:
 
 Commands:
   generalize  Create a Cookiecutter template from an existing repo.
-  hello       Say hello.
   help        Show this help message and exit.
   meld        Meld features between files.
-```
-
-Subcommands are listed alphabetically. The `hello` command is a starter subcommand:
-
-```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' hello
-```
-
-```output
-Hello from recipes_cli.tui!
-```
-
-The `help` subcommand produces the same output as bare invocation:
-
-```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' help
-```
-
-```output
-Usage: -c [OPTIONS] COMMAND [ARGS]...
-
-  Recipes CLI.
-
-Options:
-  --help  Show this message and exit.
-
-Commands:
-  generalize  Create a Cookiecutter template from an existing repo.
-  hello       Say hello.
-  help        Show this help message and exit.
-  meld        Meld features between files.
-```
-
-The `--help` flag works on any subcommand to show its usage:
-
-```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' hello --help
-```
-
-```output
-Usage: -c hello [OPTIONS]
-
-  Say hello.
-
-Options:
-  --help  Show this message and exit.
 ```
 
 ## `generalize` — create a Cookiecutter template from an existing repo
@@ -100,10 +53,10 @@ Options:
 Example usage:
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' generalize --src /path/to/repo --dst /path/to/output
+recipes generalize --src /path/to/repo --dst /path/to/output
 ```
 
-```output
+```
 Template created: /path/to/output/cookiecutter-myproject
   package detected: mypackage
   cookiecutter.json: {'project_name': 'Myproject', 'project_slug': 'myproject', 'package_name': 'mypackage'}
@@ -169,8 +122,13 @@ Example:
 
 ```output
 {
-  "new_targets": ["lint", "deploy"],
-  "modified_targets": ["test"],
+  "new_targets": [
+    "lint",
+    "deploy"
+  ],
+  "modified_targets": [
+    "test"
+  ],
   "removed_targets": [],
   "new_variables": {
     "DEPLOY_TARGET": {
@@ -180,7 +138,10 @@ Example:
     }
   },
   "changed_variables": {},
-  "new_phony": ["deploy", "lint"],
+  "new_phony": [
+    "deploy",
+    "lint"
+  ],
   "help_changes": {}
 }
 ```
@@ -199,33 +160,32 @@ platform linux -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /home/user/recip
 cachedir: .pytest_cache
 rootdir: /home/user/recipes
 configfile: pyproject.toml
-plugins: cov-7.0.0, mock-3.15.1
-collecting ... collected 24 items
+plugins: mock-3.15.1, cov-7.0.0
+collecting ... collected 23 items
 
-tests/test_cli.py::test_hello_command PASSED                             [  4%]
-tests/test_cli.py::test_no_args_shows_help PASSED                        [  8%]
-tests/test_cli.py::test_help_subcommand PASSED                           [ 12%]
-tests/test_cli.py::test_help_flag PASSED                                 [ 16%]
-tests/test_cli.py::test_commands_listed_alphabetically PASSED            [ 20%]
-tests/test_cli.py::test_generalize_appears_in_help PASSED                [ 25%]
-tests/test_cli.py::test_generalize_requires_dst PASSED                   [ 29%]
-tests/test_cli.py::test_generalize_creates_template PASSED               [ 33%]
-tests/test_cli.py::test_generalize_templates_pyproject_toml PASSED       [ 37%]
-tests/test_cli.py::test_generalize_templates_readme_heading PASSED       [ 41%]
-tests/test_cli.py::test_generalize_custom_template_name PASSED           [ 45%]
-tests/test_cli.py::test_generalize_src_defaults_to_cwd PASSED            [ 50%]
-tests/test_cli.py::test_generalize_fails_if_template_exists PASSED       [ 54%]
-tests/test_cli.py::test_generalize_replaces_package_name_in_py_files PASSED [ 58%]
-tests/test_cli.py::test_meld_group_appears_in_help PASSED                [ 62%]
-tests/test_cli.py::test_meld_makefiles_appears_in_meld_help PASSED       [ 66%]
-tests/test_cli.py::test_meld_makefiles_analysis_output PASSED            [ 70%]
-tests/test_cli.py::test_meld_makefiles_json_output PASSED                [ 75%]
-tests/test_cli.py::test_meld_makefiles_detects_modified_target PASSED    [ 79%]
-tests/test_cli.py::test_meld_makefiles_detects_new_variables PASSED      [ 83%]
-tests/test_cli.py::test_meld_makefiles_diff_output PASSED                [ 87%]
+tests/test_cli.py::test_no_args_shows_help PASSED                        [  4%]
+tests/test_cli.py::test_help_subcommand PASSED                           [  8%]
+tests/test_cli.py::test_help_flag PASSED                                 [ 13%]
+tests/test_cli.py::test_commands_listed_alphabetically PASSED            [ 17%]
+tests/test_cli.py::test_generalize_appears_in_help PASSED                [ 21%]
+tests/test_cli.py::test_generalize_requires_dst PASSED                   [ 26%]
+tests/test_cli.py::test_generalize_creates_template PASSED               [ 30%]
+tests/test_cli.py::test_generalize_templates_pyproject_toml PASSED       [ 34%]
+tests/test_cli.py::test_generalize_templates_readme_heading PASSED       [ 39%]
+tests/test_cli.py::test_generalize_custom_template_name PASSED           [ 43%]
+tests/test_cli.py::test_generalize_src_defaults_to_cwd PASSED            [ 47%]
+tests/test_cli.py::test_generalize_fails_if_template_exists PASSED       [ 52%]
+tests/test_cli.py::test_generalize_replaces_package_name_in_py_files PASSED [ 56%]
+tests/test_cli.py::test_meld_group_appears_in_help PASSED                [ 60%]
+tests/test_cli.py::test_meld_makefiles_appears_in_meld_help PASSED       [ 65%]
+tests/test_cli.py::test_meld_makefiles_analysis_output PASSED            [ 69%]
+tests/test_cli.py::test_meld_makefiles_json_output PASSED                [ 73%]
+tests/test_cli.py::test_meld_makefiles_detects_modified_target PASSED    [ 78%]
+tests/test_cli.py::test_meld_makefiles_detects_new_variables PASSED      [ 82%]
+tests/test_cli.py::test_meld_makefiles_diff_output PASSED                [ 86%]
 tests/test_cli.py::test_meld_makefiles_prompt_output PASSED              [ 91%]
 tests/test_cli.py::test_meld_makefiles_nonexistent_source PASSED         [ 95%]
 tests/test_cli.py::test_meld_makefiles_nonexistent_target PASSED         [100%]
 
-============================== 24 passed in 0.78s ==============================
+============================== 23 passed in 0.45s ==============================
 ```
