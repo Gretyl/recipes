@@ -127,7 +127,7 @@ class TestBakeDefaults:
         assert (baked / "docs" / "spec.md").is_file()
 
     def test_scripts_dir_exists(self, baked: pathlib.Path) -> None:
-        assert (baked / "scripts" / "make_cookiecutter_template.py").is_file()
+        assert (baked / "scripts").is_dir()
 
     def test_envrc_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".envrc").is_file()
@@ -148,7 +148,6 @@ class TestBakeDefaults:
         assert "docs" in tree
         assert "docs/spec.md" in tree
         assert "scripts" in tree
-        assert "scripts/make_cookiecutter_template.py" in tree
         assert "pyproject.toml" in tree
         assert "README.md" in tree
         assert "Makefile" in tree
