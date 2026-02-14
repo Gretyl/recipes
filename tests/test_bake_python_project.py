@@ -136,7 +136,9 @@ class TestBakeDefaults:
 
     def test_makefile_dist_is_phony(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
-        phony_line = [l for l in makefile.splitlines() if l.startswith(".PHONY:")][0]
+        phony_line = [
+            line for line in makefile.splitlines() if line.startswith(".PHONY:")
+        ][0]
         assert "dist" in phony_line
 
     def test_docs_spec_exists(self, baked: pathlib.Path) -> None:
@@ -225,7 +227,10 @@ class TestMakeDistValidation:
     def _git(self, *args: str, cwd: pathlib.Path) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             ["git", *args],
-            cwd=cwd, check=True, capture_output=True, text=True,
+            cwd=cwd,
+            check=True,
+            capture_output=True,
+            text=True,
             env=self.GIT_ENV,
         )
 
@@ -315,9 +320,7 @@ class TestBakeCustomContext:
         pyproject = (baked / "pyproject.toml").read_text()
         assert 'description = "My take on Widget Factory"' in pyproject
 
-    def test_pyproject_mypy_overrides_custom_package(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_pyproject_mypy_overrides_custom_package(self, baked: pathlib.Path) -> None:
         pyproject = (baked / "pyproject.toml").read_text()
         assert 'module = "widget_factory.*"' in pyproject
 
@@ -325,9 +328,7 @@ class TestBakeCustomContext:
         test_py = (baked / "tests" / "test_main.py").read_text()
         assert "from widget_factory.main import hello_world" in test_py
 
-    def test_makefile_coverage_uses_custom_package(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_makefile_coverage_uses_custom_package(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
         assert "--cov=widget_factory" in makefile
 

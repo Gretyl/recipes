@@ -9,16 +9,10 @@ import pathlib
 
 COOKBOOK = pathlib.Path(__file__).parent.parent / "cookbook"
 PP_PYPROJECT = (
-    COOKBOOK
-    / "python-project"
-    / "{{cookiecutter.project_slug}}"
-    / "pyproject.toml"
+    COOKBOOK / "python-project" / "{{cookiecutter.project_slug}}" / "pyproject.toml"
 )
 RC_PYPROJECT = (
-    COOKBOOK
-    / "repo-cli"
-    / "{{cookiecutter.project_slug}}"
-    / "pyproject.toml"
+    COOKBOOK / "repo-cli" / "{{cookiecutter.project_slug}}" / "pyproject.toml"
 )
 
 
@@ -73,8 +67,7 @@ class TestMypyStrictSettings:
         pp_mypy = _extract_section(_read(PP_PYPROJECT), "[tool.mypy]")
         rc_mypy = _extract_section(_read(RC_PYPROJECT), "[tool.mypy]")
         assert pp_mypy == rc_mypy, (
-            f"mypy settings differ:\npython-project:\n{pp_mypy}\n\n"
-            f"repo-cli:\n{rc_mypy}"
+            f"mypy settings differ:\npython-project:\n{pp_mypy}\n\nrepo-cli:\n{rc_mypy}"
         )
 
 

@@ -54,5 +54,6 @@ make test      # ruff check --fix, ruff format, then pytest --doctest-modules --
 make check     # ruff check --fix
 make format    # ruff format
 make mypy      # mypy after format+check
+make dist      # validate changelog + version, build sdist+wheel
 make clean     # remove build/cache/venv/lock artifacts
 ```
