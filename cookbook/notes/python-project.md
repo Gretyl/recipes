@@ -18,3 +18,10 @@ The foundational Cookiecutter template for uv-managed Python projects. Every bak
 - **Strict mypy defaults**: catches issues early. Per-package `ignore_missing_imports` override keeps third-party stubs from blocking adoption.
 - **Baseline hello_world**: gives `make test` something to pass immediately after baking so the developer can verify their environment before writing real code.
 - **Bundled make_cookiecutter_template.py**: each baked project can spawn its own Cookiecutter templates, keeping the pattern self-replicating.
+
+## Bake-level tests
+
+`tests/test_bake_python_project.py` — follows the same pattern as `test_bake_repo_cli.py`.
+
+- **TestBakeDefaults** (28 tests): Bakes with `cookiecutter.json` defaults and verifies the full file tree, package structure, pyproject.toml fields (name, description, Python version, hatchling, dependencies, strict mypy, overrides), Makefile targets, README heading and quickstart, and that no raw `{{cookiecutter.*}}` variables survive rendering.
+- **TestBakeCustomContext** (9 tests): Bakes with custom values (`widget-factory` / `widget_factory` / `Widget Factory`) and verifies all three template variables propagate correctly. Also checks that no default values leak into the custom bake.

@@ -1,13 +1,13 @@
 # python-project template demo
 
-*2026-02-11T18:33:58Z*
+*2026-02-13T22:00:58Z*
 
 The python-project template scaffolds a uv-managed Python project with ruff, mypy, pytest, and direnv support. It includes a baseline `hello_world` implementation so `make test` passes immediately after baking.
 
 Bake the template with defaults (project_name=Fresh Project):
 
 ```bash
-rm -rf /tmp/python-project-demo && cookiecutter /home/user/recipes/cookbook/python-project --no-input --output-dir /tmp/python-project-demo && find /tmp/python-project-demo/fresh-project -type f | sort | sed 's|/tmp/python-project-demo/||'
+rm -rf /tmp/python-project-demo && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/python-project --no-input --output-dir /tmp/python-project-demo && find /tmp/python-project-demo/fresh-project -type f | sort | sed 's|/tmp/python-project-demo/||'
 ```
 
 ```output
@@ -20,14 +20,14 @@ fresh-project/docs/spec.md
 fresh-project/fresh_project/__init__.py
 fresh-project/fresh_project/main.py
 fresh-project/pyproject.toml
-fresh-project/scripts/make_cookiecutter_template.py
+fresh-project/scripts/.gitkeep
 fresh-project/tests/test_main.py
 ```
 
 The baseline package exports a `hello_world` function:
 
 ```bash
-PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/local/bin/python -c 'from fresh_project import hello_world; print(hello_world())'
+PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/bin/python3.13 -c 'from fresh_project import hello_world; print(hello_world())'
 ```
 
 ```output
@@ -37,7 +37,7 @@ Hello, world!
 It also works as a script via `main()`:
 
 ```bash
-PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/local/bin/python -c 'from fresh_project.main import main; main()'
+PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/bin/python3.13 -c 'from fresh_project.main import main; main()'
 ```
 
 ```output
@@ -55,7 +55,8 @@ make: Entering directory '/tmp/python-project-demo/fresh-project'
 Target       Description
 ------       -----------
 check        Lint and auto-fix issues with ruff.
-clean        Remove build, cache, venv, and lock artifacts.
+clean        Remove build, cache, venv, lock, and dist artifacts.
+dist         Prepare a versioned release in dist/.
 format       Format code using ruff.
 mypy         Type-check sources with mypy after format/check.
 test         Run tests with coverage after check and format.

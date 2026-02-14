@@ -55,6 +55,7 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: marks tests that install and run baked projects (deselect with '-m \"not slow\"')"]
 
 [tool.ruff]
 exclude = ["cookbook/"]

@@ -1,13 +1,13 @@
 # recipes CLI
 
-*2026-02-12T14:46:50Z*
+*2026-02-13T21:55:58Z*
 
 The recipes CLI is the repo-local command-line interface provided by the `recipes_cli` package. It uses Click with an `OrderedGroup` that lists subcommands alphabetically. Every subcommand must be built with red/green TDD, use Pydantic type signatures for structured data, and pass `mypy` cleanly. See CLI.md for the full development standards.
 
 Bare invocation (no arguments) displays help with all available subcommands:
 
 ```bash
-/usr/local/bin/python3 -c 'from recipes_cli.tui.cli import cli; cli()'
+/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()'
 ```
 
 ```output
@@ -26,7 +26,7 @@ Commands:
 Subcommands are listed alphabetically. The `hello` command is a starter subcommand:
 
 ```bash
-/usr/local/bin/python3 -c 'from recipes_cli.tui.cli import cli; cli()' hello
+/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' hello
 ```
 
 ```output
@@ -36,7 +36,7 @@ Hello from recipes_cli.tui!
 The `help` subcommand produces the same output as bare invocation:
 
 ```bash
-/usr/local/bin/python3 -c 'from recipes_cli.tui.cli import cli; cli()' help
+/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' help
 ```
 
 ```output
@@ -55,7 +55,7 @@ Commands:
 The `--help` flag works on any subcommand to show its usage:
 
 ```bash
-/usr/local/bin/python3 -c 'from recipes_cli.tui.cli import cli; cli()' hello --help
+/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' hello --help
 ```
 
 ```output
@@ -70,16 +70,16 @@ Options:
 Tests verify all subcommands using Click's `CliRunner`. Every subcommand is covered by red/green TDD:
 
 ```bash
-/usr/local/bin/python3 -m pytest tests/test_cli.py -v
+/home/user/recipes/.venv/bin/python -m pytest tests/test_cli.py -v
 ```
 
 ```output
 ============================= test session starts ==============================
-platform linux -- Python 3.11.14, pytest-9.0.2, pluggy-1.6.0 -- /usr/local/bin/python3
+platform linux -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /home/user/recipes/.venv/bin/python
 cachedir: .pytest_cache
 rootdir: /home/user/recipes
 configfile: pyproject.toml
-plugins: mock-3.15.1, cov-7.0.0
+plugins: cov-7.0.0, mock-3.15.1
 collecting ... collected 5 items
 
 tests/test_cli.py::test_hello_command PASSED                             [ 20%]
@@ -88,5 +88,5 @@ tests/test_cli.py::test_help_subcommand PASSED                           [ 60%]
 tests/test_cli.py::test_help_flag PASSED                                 [ 80%]
 tests/test_cli.py::test_commands_listed_alphabetically PASSED            [100%]
 
-============================== 5 passed in 0.06s ===============================
+============================== 5 passed in 0.08s ===============================
 ```
