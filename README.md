@@ -44,7 +44,7 @@ cookiecutter cookbook/python-project/
 ## Creating a new template from an existing project
 
 ```bash
-python scripts/make_cookiecutter_template.py --src /path/to/repo --dst /path/to/output
+recipes generalize --src /path/to/repo --dst /path/to/output
 ```
 
 ## Makefile targets
