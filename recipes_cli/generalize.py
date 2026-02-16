@@ -1,6 +1,5 @@
 """Create a Cookiecutter template from an existing repo's layout.
 
-Core logic extracted from scripts/make_cookiecutter_template.py.
 CLI wrapper lives in recipes_cli.tui.cli.
 """
 
@@ -118,6 +117,73 @@ def _is_binary_by_gitattributes(rel_path: str, binary_patterns: set[str]) -> boo
     return False
 
 
+def _apply_template_substitutions(
+    content: str, src_file: Path, package_name: str | None
+) -> str:
+    """Replace project-specific values with cookiecutter template variables."""
+    if package_name:
+        content = re.sub(
+            rf"\b{re.escape(package_name)}\b",
+            "{{cookiecutter.package_name}}",
+            content,
+        )
+
+    if src_file.name == "pyproject.toml":
+        content = re.sub(
+            r'(name\s*=\s*)"[^"]+"',
+            r'\1"{{cookiecutter.project_slug}}"',
+            content,
+            count=1,
+        )
+        content = re.sub(
+            r'(description\s*=\s*)"[^"]+"',
+            r'\1"My take on {{cookiecutter.project_name}}"',
+            content,
+            count=1,
+        )
+
+    if src_file.name == "README.md":
+        content = re.sub(
+            r"^#\s+.+",
+            "# {{cookiecutter.package_name}}",
+            content,
+            count=1,
+        )
+
+    return content
+
+
+def _process_file(
+    src_file: Path,
+    dest_file: Path,
+    rel_file: str,
+    package_name: str | None,
+    binary_patterns: set[str],
+) -> None:
+    """Process a single file: apply template substitutions or copy as-is."""
+    file_is_binary = _is_binary_by_gitattributes(rel_file, binary_patterns)
+
+    if file_is_binary or not _is_templatable_file(src_file):
+        shutil.copy2(src_file, dest_file)
+        return
+
+    content = _safe_read_text(src_file)
+    if content is None:
+        shutil.copy2(src_file, dest_file)
+        return
+
+    content = _apply_template_substitutions(content, src_file, package_name)
+    dest_file.write_text(content, encoding="utf-8")
+
+
+def _template_dir_parts(parts: tuple[str, ...], package_name: str | None) -> list[str]:
+    """Map directory path parts to cookiecutter template variables."""
+    return [
+        "{{cookiecutter.package_name}}" if package_name and part == package_name else part
+        for part in parts
+    ]
+
+
 def generalize(args: GeneralizeArgs) -> GeneralizeResult:
     """Convert a Python repo into a Cookiecutter template.
 
@@ -173,13 +239,7 @@ def generalize(args: GeneralizeArgs) -> GeneralizeResult:
                 dirs.clear()
                 continue
 
-        rel_parts: list[str] = []
-        for part in rel_root.parts:
-            if package_name and part == package_name:
-                rel_parts.append("{{cookiecutter.package_name}}")
-            else:
-                rel_parts.append(part)
-
+        rel_parts = _template_dir_parts(rel_root.parts, package_name)
         dest_root = project_root.joinpath(*rel_parts)
         dest_root.mkdir(parents=True, exist_ok=True)
 
@@ -205,48 +265,9 @@ def generalize(args: GeneralizeArgs) -> GeneralizeResult:
             if gitignore_spec and gitignore_spec.match_file(rel_file):
                 continue
 
-            dest_file = dest_root / file_name
-
-            file_is_binary = _is_binary_by_gitattributes(rel_file, binary_patterns)
-
-            if not file_is_binary and _is_templatable_file(src_file):
-                content = _safe_read_text(src_file)
-                if content is None:
-                    shutil.copy2(src_file, dest_file)
-                    continue
-
-                if package_name:
-                    content = re.sub(
-                        rf"\b{re.escape(package_name)}\b",
-                        "{{cookiecutter.package_name}}",
-                        content,
-                    )
-
-                if src_file.name == "pyproject.toml":
-                    content = re.sub(
-                        r'(name\s*=\s*)"[^"]+"',
-                        r'\1"{{cookiecutter.project_slug}}"',
-                        content,
-                        count=1,
-                    )
-                    content = re.sub(
-                        r'(description\s*=\s*)"[^"]+"',
-                        r'\1"My take on {{cookiecutter.project_name}}"',
-                        content,
-                        count=1,
-                    )
-
-                if src_file.name == "README.md":
-                    content = re.sub(
-                        r"^#\s+.+",
-                        "# {{cookiecutter.package_name}}",
-                        content,
-                        count=1,
-                    )
-
-                dest_file.write_text(content, encoding="utf-8")
-            else:
-                shutil.copy2(src_file, dest_file)
+            _process_file(
+                src_file, dest_root / file_name, rel_file, package_name, binary_patterns
+            )
 
     return GeneralizeResult(
         template_root=template_root,

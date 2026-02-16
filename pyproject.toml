@@ -62,6 +62,3 @@ exclude = ["cookbook/"]
 
 [tool.ruff.lint]
 select = ["SIM", "PIE", "RET", "C90", "C4", "N", "PLW", "PLC"]
-
-[tool.ruff.lint.mccabe]
-max-complexity = 20

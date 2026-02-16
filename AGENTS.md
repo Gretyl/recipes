@@ -16,7 +16,6 @@ A collection of Cookiecutter templates, tooling for scaffolding Python projects,
   - `tui/cli.py` — Click CLI definitions (`recipes generalize`, `recipes meld makefiles`)
   - `generalize.py` — convert an existing Python repo into a new Cookiecutter template
   - `meld.py` — merge Makefile targets
-- `scripts/` — standalone tooling (legacy; prefer the `recipes` CLI)
 - `tests/` — pytest test suite
 - `docs/` — project documentation (spec.md)
 
@@ -82,7 +81,6 @@ Use a scope that identifies the area of the codebase affected:
 - **recipes** — `recipes/` Python package
 - **tests** — `tests/` test suite
 - **docs** — `docs/` or top-level documentation files (README, AGENTS.md, etc.)
-- **scripts** — `scripts/` standalone tooling
 - **deps** — dependency or lockfile changes
 
 The scope is required when the change clearly maps to one area. Omit it only for cross-cutting changes that span multiple scopes.
