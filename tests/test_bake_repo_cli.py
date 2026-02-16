@@ -95,6 +95,7 @@ class TestBakeWithWorkflow:
             cwd=baked,
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0, (
             f"Baked tests failed:\n{result.stdout}\n{result.stderr}"

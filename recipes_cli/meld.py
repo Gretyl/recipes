@@ -151,8 +151,7 @@ def parse_makefile(path: Path) -> MakefileStructure:
             if current_target:
                 recipe_line = line[1:]
                 targets[current_target].recipe.append(recipe_line)
-                if current_target == "help":
-                    if help_match := HELP_PRINTF_PATTERN.search(recipe_line):
+                if current_target == "help" and (help_match := HELP_PRINTF_PATTERN.search(recipe_line)):
                         target_name = help_match.group(1)
                         description = help_match.group(2)
                         if target_name not in ("Target", "------"):
@@ -248,9 +247,7 @@ def detect_features(src: MakefileStructure, tgt: MakefileStructure) -> FeatureDi
         tgt_help = tgt.help_entries or {}
         help_changes = {}
         for target, desc in src_help.items():
-            if target not in tgt_help:
-                help_changes[target] = desc
-            elif tgt_help[target] != desc:
+            if target not in tgt_help or tgt_help[target] != desc:
                 help_changes[target] = desc
         for target in tgt_help:
             if target not in src_help:
@@ -570,9 +567,8 @@ def meld_makefiles(args: MeldMakefilesArgs) -> str:
 
     if args.output == "json":
         return format_json(features)
-    elif args.output == "diff":
+    if args.output == "diff":
         return diff
-    elif args.output == "prompt":
+    if args.output == "prompt":
         return format_prompt(features, src, src_path, tgt_path, diff)
-    else:
-        return format_analysis(features, src, src_path, tgt_path)
+    return format_analysis(features, src, src_path, tgt_path)

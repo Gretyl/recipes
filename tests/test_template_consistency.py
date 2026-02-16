@@ -40,7 +40,7 @@ def _extract_value(text: str, key: str) -> str:
     """Extract a single key = value from TOML text."""
     for line in text.splitlines():
         stripped = line.strip()
-        if stripped.startswith(f"{key} =") or stripped.startswith(f"{key}="):
+        if stripped.startswith((f"{key} =", f"{key}=")):
             return stripped.split("=", 1)[1].strip().strip('"')
     msg = f"Key {key!r} not found"
     raise KeyError(msg)

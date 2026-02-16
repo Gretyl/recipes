@@ -18,6 +18,7 @@ modified dependencies, variable changes, and help entry additions.
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import re
 import sys
@@ -141,8 +142,7 @@ def parse_makefile(path: Path) -> MakefileStructure:
                 targets[current_target].recipe.append(recipe_line)
 
                 # Parse help entries from printf lines in help target
-                if current_target == "help":
-                    if help_match := HELP_PRINTF_PATTERN.search(recipe_line):
+                if current_target == "help" and (help_match := HELP_PRINTF_PATTERN.search(recipe_line)):
                         target_name = help_match.group(1)
                         description = help_match.group(2)
                         # Skip header lines
@@ -236,9 +236,7 @@ def detect_features(src: MakefileStructure, tgt: MakefileStructure) -> FeatureDi
 
         # New or modified entries
         for target, desc in src_help.items():
-            if target not in tgt_help:
-                help_changes[target] = desc
-            elif tgt_help[target] != desc:
+            if target not in tgt_help or tgt_help[target] != desc:
                 help_changes[target] = desc
 
         # Removed entries
@@ -259,8 +257,6 @@ def detect_features(src: MakefileStructure, tgt: MakefileStructure) -> FeatureDi
 
 def generate_diff(src_path: Path, tgt_path: Path) -> str:
     """Generate unified diff suitable for Claude analysis."""
-    import difflib
-
     src_lines = src_path.read_text(encoding="utf-8").splitlines(keepends=True)
     tgt_lines = tgt_path.read_text(encoding="utf-8").splitlines(keepends=True)
 
