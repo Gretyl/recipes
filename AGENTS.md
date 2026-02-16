@@ -52,6 +52,52 @@ make mypy      # mypy after format+check
 make clean     # remove build/cache/venv/lock artifacts
 ```
 
+## Commit Conventions
+
+All commits **must** use [Conventional Commits](https://www.conventionalcommits.org/) for the subject line:
+
+```
+<type>(<scope>): <short summary>
+```
+
+### Types
+
+- **feat** — new feature or functionality
+- **fix** — bug fix
+- **docs** — documentation-only changes
+- **style** — formatting, whitespace, or cosmetic changes (no logic changes)
+- **refactor** — code restructuring without changing external behavior
+- **test** — adding or updating tests
+- **chore** — maintenance tasks, dependency updates, CI config, etc.
+- **build** — changes to the build system or tooling
+- **ci** — continuous integration configuration changes
+- **perf** — performance improvements
+
+### Scopes
+
+Use a scope that identifies the area of the codebase affected:
+
+- **template** — `cookbook/python-project/` template files
+- **cli** — `recipes_cli/` CLI package
+- **recipes** — `recipes/` Python package
+- **tests** — `tests/` test suite
+- **docs** — `docs/` or top-level documentation files (README, AGENTS.md, etc.)
+- **scripts** — `scripts/` standalone tooling
+- **deps** — dependency or lockfile changes
+
+The scope is required when the change clearly maps to one area. Omit it only for cross-cutting changes that span multiple scopes.
+
+### Examples
+
+```
+feat(cli): add export subcommand for templates
+fix(template): correct pyproject.toml Python version
+docs(docs): update spec with new CLI usage
+test(tests): add coverage for generalize edge cases
+chore(deps): bump ruff to 0.8.x
+refactor(recipes): simplify hello_world module
+```
+
 ## Template Conventions
 
 - Generated projects use **uv** for dependency management and **direnv** for automatic venv activation (`uv sync && direnv allow`)
