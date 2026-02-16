@@ -1,7 +1,7 @@
 """Meld features between files.
 
-Core logic for Makefile structural comparison, extracted from
-scripts/meld_makefiles.py.  CLI wrapper lives in recipes_cli.tui.cli.
+Core logic for Makefile structural comparison.
+CLI wrapper lives in recipes_cli.tui.cli.
 """
 
 from __future__ import annotations
@@ -97,6 +97,19 @@ TARGET_PATTERN = re.compile(r"^([a-zA-Z_.][a-zA-Z0-9_./%-]*)\s*:(?!=)(.*)$")
 HELP_PRINTF_PATTERN = re.compile(r'@printf\s+"%-\d+s\s+%s\\n"\s+"([^"]+)"\s+"([^"]*)"')
 
 
+def _extract_help_entry(
+    recipe_line: str, current_target: str, help_entries: dict[str, str]
+) -> None:
+    """Parse help printf lines from a 'help' target recipe."""
+    if current_target != "help":
+        return
+    if help_match := HELP_PRINTF_PATTERN.search(recipe_line):
+        target_name = help_match.group(1)
+        description = help_match.group(2)
+        if target_name not in ("Target", "------"):
+            help_entries[target_name] = description
+
+
 def parse_makefile(path: Path) -> MakefileStructure:
     """Parse a Makefile into a structured representation."""
     variables: dict[str, MakefileVariable] = {}
@@ -108,25 +121,8 @@ def parse_makefile(path: Path) -> MakefileStructure:
     lines = path.read_text(encoding="utf-8").splitlines()
     pending_comments: list[str] = []
     current_target: str | None = None
-    logical_line = ""
-    line_continuation = False
 
-    for raw_line in lines:
-        if line_continuation:
-            logical_line += raw_line
-            if not raw_line.endswith("\\"):
-                line_continuation = False
-                line = logical_line
-            else:
-                logical_line = logical_line[:-1]
-                continue
-        else:
-            if raw_line.endswith("\\"):
-                logical_line = raw_line[:-1]
-                line_continuation = True
-                continue
-            line = raw_line
-
+    for line in lines:
         if not line.strip():
             pending_comments.clear()
             continue
@@ -136,9 +132,7 @@ def parse_makefile(path: Path) -> MakefileStructure:
             continue
 
         if match := PHONY_PATTERN.match(line):
-            phony_list = match.group(1).strip()
-            for target_name in phony_list.split():
-                phony_targets.add(target_name)
+            phony_targets.update(match.group(1).strip().split())
             pending_comments.clear()
             continue
 
@@ -151,23 +145,16 @@ def parse_makefile(path: Path) -> MakefileStructure:
             if current_target:
                 recipe_line = line[1:]
                 targets[current_target].recipe.append(recipe_line)
-                if current_target == "help":
-                    if help_match := HELP_PRINTF_PATTERN.search(recipe_line):
-                        target_name = help_match.group(1)
-                        description = help_match.group(2)
-                        if target_name not in ("Target", "------"):
-                            help_entries[target_name] = description
+                _extract_help_entry(recipe_line, current_target, help_entries)
             pending_comments.clear()
             continue
 
         if match := VAR_PATTERN.match(line):
             var_name = match.group(1)
-            operator = match.group(2)
-            value = match.group(3).strip()
             variables[var_name] = MakefileVariable(
                 name=var_name,
-                operator=operator,
-                value=value,
+                operator=match.group(2),
+                value=match.group(3).strip(),
                 comments=pending_comments.copy(),
             )
             pending_comments.clear()
@@ -176,10 +163,9 @@ def parse_makefile(path: Path) -> MakefileStructure:
         if match := TARGET_PATTERN.match(line):
             target_name = match.group(1)
             deps_str = match.group(2).strip()
-            dependencies = deps_str.split() if deps_str else []
             targets[target_name] = MakefileTarget(
                 name=target_name,
-                dependencies=dependencies,
+                dependencies=deps_str.split() if deps_str else [],
                 recipe=[],
                 comments=pending_comments.copy(),
             )
@@ -201,6 +187,43 @@ def parse_makefile(path: Path) -> MakefileStructure:
 # ---------------------------------------------------------------------------
 # Diffing
 # ---------------------------------------------------------------------------
+
+
+def _detect_help_changes(
+    src: MakefileStructure, tgt: MakefileStructure
+) -> dict[str, str | None] | None:
+    """Compute help entry additions, modifications, and removals."""
+    if src.help_entries is None and tgt.help_entries is None:
+        return None
+    src_help = src.help_entries or {}
+    tgt_help = tgt.help_entries or {}
+    changes: dict[str, str | None] = {}
+    for target, desc in src_help.items():
+        if target not in tgt_help or tgt_help[target] != desc:
+            changes[target] = desc
+    for target in tgt_help:
+        if target not in src_help:
+            changes[target] = None
+    return changes if changes else None
+
+
+def _detect_variable_changes(
+    src: MakefileStructure, tgt: MakefileStructure
+) -> dict[str, VariableChange]:
+    """Find variables that exist in both but differ in value or operator."""
+    changed: dict[str, VariableChange] = {}
+    for name in src.variables:
+        if name in tgt.variables:
+            src_var = src.variables[name]
+            tgt_var = tgt.variables[name]
+            if src_var.value != tgt_var.value or src_var.operator != tgt_var.operator:
+                changed[name] = VariableChange(
+                    old_value=tgt_var.value,
+                    new_value=src_var.value,
+                    old_operator=tgt_var.operator,
+                    new_operator=src_var.operator,
+                )
+    return changed
 
 
 def detect_features(src: MakefileStructure, tgt: MakefileStructure) -> FeatureDiff:
@@ -227,43 +250,14 @@ def detect_features(src: MakefileStructure, tgt: MakefileStructure) -> FeatureDi
         if name not in tgt.variables
     }
 
-    changed_variables: dict[str, VariableChange] = {}
-    for name in src.variables:
-        if name in tgt.variables:
-            src_var = src.variables[name]
-            tgt_var = tgt.variables[name]
-            if src_var.value != tgt_var.value or src_var.operator != tgt_var.operator:
-                changed_variables[name] = VariableChange(
-                    old_value=tgt_var.value,
-                    new_value=src_var.value,
-                    old_operator=tgt_var.operator,
-                    new_operator=src_var.operator,
-                )
-
-    new_phony = sorted(src.phony_targets - tgt.phony_targets)
-
-    help_changes: dict[str, str | None] | None = None
-    if src.help_entries is not None or tgt.help_entries is not None:
-        src_help = src.help_entries or {}
-        tgt_help = tgt.help_entries or {}
-        help_changes = {}
-        for target, desc in src_help.items():
-            if target not in tgt_help:
-                help_changes[target] = desc
-            elif tgt_help[target] != desc:
-                help_changes[target] = desc
-        for target in tgt_help:
-            if target not in src_help:
-                help_changes[target] = None
-
     return FeatureDiff(
         new_targets=new_targets,
         modified_targets=modified_targets,
         removed_targets=removed_targets,
         new_variables=new_variables,
-        changed_variables=changed_variables,
-        new_phony=new_phony,
-        help_changes=help_changes if help_changes else None,
+        changed_variables=_detect_variable_changes(src, tgt),
+        new_phony=sorted(src.phony_targets - tgt.phony_targets),
+        help_changes=_detect_help_changes(src, tgt),
     )
 
 
@@ -282,21 +276,20 @@ def generate_diff(src_path: Path, tgt_path: Path) -> str:
     return "".join(diff)
 
 
-def format_analysis(
-    features: FeatureDiff,
-    src: MakefileStructure,
-    src_path: Path,
-    tgt_path: Path,
-) -> str:
-    """Human-readable analysis output."""
-    lines: list[str] = []
-    lines.append("Makefile Meld Analysis")
-    lines.append("=" * 50)
-    lines.append("")
-    lines.append(f"Source: {src_path}")
-    lines.append(f"Target: {tgt_path}")
-    lines.append("")
+OPERATOR_DESCRIPTIONS = {
+    "?=": "conditional assignment",
+    ":=": "immediate expansion",
+    "=": "recursive expansion",
+    "+=": "append",
+    "!=": "shell assignment",
+}
 
+
+def _format_targets_section(
+    features: FeatureDiff, src: MakefileStructure
+) -> list[str]:
+    """Format new and modified target sections."""
+    lines: list[str] = []
     if features.new_targets:
         lines.append(f"NEW TARGETS ({len(features.new_targets)})")
         for name in features.new_targets:
@@ -313,17 +306,16 @@ def format_analysis(
             deps = " ".join(target.dependencies) if target.dependencies else "(none)"
             lines.append(f"  * {name:20s} -> Dependencies: {deps}")
         lines.append("")
+    return lines
 
+
+def _format_variables_section(features: FeatureDiff) -> list[str]:
+    """Format new and changed variable sections."""
+    lines: list[str] = []
     if features.new_variables:
         lines.append(f"NEW VARIABLES ({len(features.new_variables)})")
         for name, var in features.new_variables.items():
-            operator_desc = {
-                "?=": "conditional assignment",
-                ":=": "immediate expansion",
-                "=": "recursive expansion",
-                "+=": "append",
-                "!=": "shell assignment",
-            }.get(var.operator, var.operator)
+            operator_desc = OPERATOR_DESCRIPTIONS.get(var.operator, var.operator)
             lines.append(f"  * {name} {var.operator} {var.value:40s} [{operator_desc}]")
         lines.append("")
 
@@ -336,25 +328,54 @@ def format_analysis(
                     f"    (operator changed: {change.old_operator} -> {change.new_operator})"
                 )
         lines.append("")
+    return lines
+
+
+def _format_help_section(features: FeatureDiff) -> list[str]:
+    """Format help entry change sections."""
+    lines: list[str] = []
+    if not features.help_changes:
+        return lines
+    added = [k for k, v in features.help_changes.items() if v is not None]
+    removed = [k for k, v in features.help_changes.items() if v is None]
+    if added:
+        lines.append(f"HELP ENTRIES ADDED ({len(added)})")
+        for entry_name in added:
+            lines.append(f"  * {entry_name}")
+        lines.append("")
+    if removed:
+        lines.append(f"HELP ENTRIES REMOVED ({len(removed)})")
+        for entry_name in removed:
+            lines.append(f"  * {entry_name}")
+        lines.append("")
+    return lines
+
+
+def format_analysis(
+    features: FeatureDiff,
+    src: MakefileStructure,
+    src_path: Path,
+    tgt_path: Path,
+) -> str:
+    """Human-readable analysis output."""
+    lines: list[str] = [
+        "Makefile Meld Analysis",
+        "=" * 50,
+        "",
+        f"Source: {src_path}",
+        f"Target: {tgt_path}",
+        "",
+    ]
+
+    lines.extend(_format_targets_section(features, src))
+    lines.extend(_format_variables_section(features))
 
     if features.new_phony:
         lines.append(f"NEW .PHONY DECLARATIONS ({len(features.new_phony)})")
         lines.append(f"  * {', '.join(features.new_phony)}")
         lines.append("")
 
-    if features.help_changes:
-        added = [k for k, v in features.help_changes.items() if v is not None]
-        removed = [k for k, v in features.help_changes.items() if v is None]
-        if added:
-            lines.append(f"HELP ENTRIES ADDED ({len(added)})")
-            for entry_name in added:
-                lines.append(f"  * {entry_name}")
-            lines.append("")
-        if removed:
-            lines.append(f"HELP ENTRIES REMOVED ({len(removed)})")
-            for entry_name in removed:
-                lines.append(f"  * {entry_name}")
-            lines.append("")
+    lines.extend(_format_help_section(features))
 
     lines.append("=" * 50)
     lines.append("Run with --output=prompt to generate Claude analysis prompt")
@@ -570,9 +591,8 @@ def meld_makefiles(args: MeldMakefilesArgs) -> str:
 
     if args.output == "json":
         return format_json(features)
-    elif args.output == "diff":
+    if args.output == "diff":
         return diff
-    elif args.output == "prompt":
+    if args.output == "prompt":
         return format_prompt(features, src, src_path, tgt_path, diff)
-    else:
-        return format_analysis(features, src, src_path, tgt_path)
+    return format_analysis(features, src, src_path, tgt_path)

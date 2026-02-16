@@ -40,3 +40,6 @@ warn_no_return = true
 [[tool.mypy.overrides]]
 module = "{{cookiecutter.package_name}}.*"
 ignore_missing_imports = true
+
+[tool.ruff.lint]
+select = ["SIM", "PIE", "RET", "C90", "C4", "N", "PLW", "PLC"]

@@ -199,6 +199,7 @@ class TestBakeDefaults:
             cwd=baked,
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0, (
             f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
@@ -255,6 +256,7 @@ class TestMakeDistValidation:
             cwd=baked,
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0
         assert "uv build" in result.stdout
@@ -267,6 +269,7 @@ class TestMakeDistValidation:
             capture_output=True,
             text=True,
             env=self.GIT_ENV,
+            check=False,
         )
 
     def test_dist_fails_without_changelog_version(self, baked: pathlib.Path) -> None:

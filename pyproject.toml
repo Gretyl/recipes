@@ -59,3 +59,6 @@ markers = ["slow: marks tests that install and run baked projects (deselect with
 
 [tool.ruff]
 exclude = ["cookbook/"]
+
+[tool.ruff.lint]
+select = ["SIM", "PIE", "RET", "C90", "C4", "N", "PLW", "PLC"]
