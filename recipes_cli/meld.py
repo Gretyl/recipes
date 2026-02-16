@@ -97,29 +97,6 @@ TARGET_PATTERN = re.compile(r"^([a-zA-Z_.][a-zA-Z0-9_./%-]*)\s*:(?!=)(.*)$")
 HELP_PRINTF_PATTERN = re.compile(r'@printf\s+"%-\d+s\s+%s\\n"\s+"([^"]+)"\s+"([^"]*)"')
 
 
-def _join_continuation_lines(raw_lines: list[str]) -> list[str]:
-    """Join backslash-continued lines into logical lines."""
-    result: list[str] = []
-    logical_line = ""
-    continuing = False
-
-    for raw_line in raw_lines:
-        if continuing:
-            logical_line += raw_line
-            if not raw_line.endswith("\\"):
-                continuing = False
-                result.append(logical_line)
-            else:
-                logical_line = logical_line[:-1]
-        elif raw_line.endswith("\\"):
-            logical_line = raw_line[:-1]
-            continuing = True
-        else:
-            result.append(raw_line)
-
-    return result
-
-
 def _extract_help_entry(
     recipe_line: str, current_target: str, help_entries: dict[str, str]
 ) -> None:
@@ -141,8 +118,7 @@ def parse_makefile(path: Path) -> MakefileStructure:
     default_goal: str | None = None
     help_entries: dict[str, str] = {}
 
-    raw_lines = path.read_text(encoding="utf-8").splitlines()
-    lines = _join_continuation_lines(raw_lines)
+    lines = path.read_text(encoding="utf-8").splitlines()
     pending_comments: list[str] = []
     current_target: str | None = None
 
