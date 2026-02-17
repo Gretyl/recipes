@@ -140,4 +140,4 @@ Example:
 
 ## Tests
 
-See `tests/test_cli.py` for full coverage of every subcommand via Click's `CliRunner`.
+See [`tests/test_cli.py`](tests/test_cli.py) for full coverage of every subcommand via Click's `CliRunner`.
