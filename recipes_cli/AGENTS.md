@@ -18,21 +18,12 @@ recipes <subcommand>
 
 The CLI exists to give Makefile targets (and developers) a programmable interface for operations that outgrow shell one-liners — template baking, scaffold generation, Makefile melding, and future enhancements that benefit from argument parsing, validation, and composition.
 
-## Architecture
-
-```
-recipes_cli/
-  __init__.py
-  generalize.py     # convert a Python repo into a Cookiecutter template
-  meld.py           # compare and merge Makefile targets
-  tui/
-    __init__.py
-    cli.py           # Click entry point (OrderedGroup)
-```
+## Architecture decisions
 
 - **Entry point:** `recipes = "recipes_cli.tui.cli:cli"` (defined in `pyproject.toml`)
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
+- **Relation to Makefile:** Makefile targets remain the stable developer interface (`make test`, `make check`, etc.). The CLI supplements Make for tasks requiring richer argument handling or Python-native logic. A Makefile target can delegate to the CLI.
 
 ## Development standards
 
@@ -75,22 +66,6 @@ def greet(name: str) -> None:
 ```
 
 3. Verify the tests pass (`make test`) and types check (`make mypy`).
-
-Then from a Makefile target:
-
-```makefile
-greet:
-	@recipes greet World
-```
-
-## Relation to Makefile
-
-Makefile targets remain the stable developer interface (`make test`, `make check`, etc.). The CLI supplements Make for tasks requiring richer argument handling or Python-native logic. A Makefile target can delegate to the CLI:
-
-```makefile
-bake:
-	@recipes bake --template python-project
-```
 
 ## Keeping USAGE.md in sync
 
