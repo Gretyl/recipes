@@ -285,9 +285,7 @@ OPERATOR_DESCRIPTIONS = {
 }
 
 
-def _format_targets_section(
-    features: FeatureDiff, src: MakefileStructure
-) -> list[str]:
+def _format_targets_section(features: FeatureDiff, src: MakefileStructure) -> list[str]:
     """Format new and modified target sections."""
     lines: list[str] = []
     if features.new_targets:

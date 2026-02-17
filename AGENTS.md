@@ -53,6 +53,8 @@ make clean     # remove build/cache/venv/lock artifacts
 
 ## Commit Conventions
 
+Prefer atomic commits — each commit should contain a single logical change (one feature, one fix, one refactor). Separating concerns into distinct commits makes review easier and keeps `git bisect` useful. It's fine to commit tests and implementation separately when working in a TDD style.
+
 All commits **must** use [Conventional Commits](https://www.conventionalcommits.org/) for the subject line:
 
 ```
@@ -85,13 +87,15 @@ Use a scope that identifies the area of the codebase affected:
 
 The scope is required when the change clearly maps to one area. Omit it only for cross-cutting changes that span multiple scopes.
 
+Avoid redundant type/scope pairs where the scope restates the type (e.g., `docs(docs):`, `test(tests):`). When the type already conveys the scope, omit the scope: `docs: update spec with new CLI usage`. Use a scope only when it adds information beyond the type.
+
 ### Examples
 
 ```
 feat(cli): add export subcommand for templates
 fix(template): correct pyproject.toml Python version
-docs(docs): update spec with new CLI usage
-test(tests): add coverage for generalize edge cases
+docs: update spec with new CLI usage
+test: add coverage for generalize edge cases
 chore(deps): bump ruff to 0.8.x
 refactor(recipes): simplify hello_world module
 ```

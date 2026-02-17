@@ -179,7 +179,9 @@ def _process_file(
 def _template_dir_parts(parts: tuple[str, ...], package_name: str | None) -> list[str]:
     """Map directory path parts to cookiecutter template variables."""
     return [
-        "{{cookiecutter.package_name}}" if package_name and part == package_name else part
+        "{{cookiecutter.package_name}}"
+        if package_name and part == package_name
+        else part
         for part in parts
     ]
 
