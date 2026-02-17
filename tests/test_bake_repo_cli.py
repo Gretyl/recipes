@@ -117,7 +117,7 @@ class TestBakeWithWorkflow:
         assert "tests/test_template_apply.py" in tree
         assert "tests/test_template_prepare.py" in tree
         assert "README.md" in tree
-        assert "CLI.md" in tree
+        assert "demo_repo_cli/AGENTS.md" in tree
         assert "pyproject.toml" in tree
         assert "requirements.txt" in tree
         assert ".envrc" in tree
@@ -183,7 +183,7 @@ class TestBakeWithoutWorkflow:
         assert (baked / "demo_repo_cli" / "tui" / "cli.py").is_file()
         assert (baked / "pyproject.toml").is_file()
         assert (baked / "README.md").is_file()
-        assert (baked / "CLI.md").is_file()
+        assert (baked / "demo_repo_cli" / "AGENTS.md").is_file()
 
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
@@ -199,7 +199,7 @@ class TestBakeWithoutWorkflow:
         assert "tests/test_template_apply.py" in tree
         assert "tests/test_template_prepare.py" in tree
         assert "README.md" in tree
-        assert "CLI.md" in tree
+        assert "demo_repo_cli/AGENTS.md" in tree
         assert "pyproject.toml" in tree
         assert "requirements.txt" in tree
         assert ".envrc" in tree

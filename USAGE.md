@@ -2,7 +2,7 @@
 
 *2026-02-14T04:49:21Z*
 
-The recipes CLI is the repo-local command-line interface provided by the `recipes_cli` package. It uses Click with an `OrderedGroup` that lists subcommands alphabetically. Every subcommand must be built with red/green TDD, use Pydantic type signatures for structured data, and pass `mypy` cleanly. See CLI.md for the full development standards.
+The recipes CLI is the repo-local command-line interface provided by the `recipes_cli` package. It uses Click with an `OrderedGroup` that lists subcommands alphabetically. Every subcommand must be built with red/green TDD, use Pydantic type signatures for structured data, and pass `mypy` cleanly. See `recipes_cli/AGENTS.md` for the full development standards.
 
 Bare invocation (no arguments) displays help with all available subcommands:
 

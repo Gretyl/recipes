@@ -51,6 +51,8 @@ make mypy      # mypy after format+check
 make clean     # remove build/cache/venv/lock artifacts
 ```
 
+See `Makefile` for the canonical target definitions and `USAGE.md` for full CLI syntax and output examples.
+
 ## Commit Conventions
 
 Prefer atomic commits — each commit should contain a single logical change (one feature, one fix, one refactor). Separating concerns into distinct commits makes review easier and keeps `git bisect` useful. It's fine to commit tests and implementation separately when working in a TDD style.
