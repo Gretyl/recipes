@@ -22,9 +22,12 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
 
 ```
 recipes_cli/
+  __init__.py
+  generalize.py     # convert a Python repo into a Cookiecutter template
+  meld.py           # compare and merge Makefile targets
   tui/
     __init__.py
-    cli.py          # Click entry point (OrderedGroup)
+    cli.py           # Click entry point (OrderedGroup)
 ```
 
 - **Entry point:** `recipes = "recipes_cli.tui.cli:cli"` (defined in `pyproject.toml`)
