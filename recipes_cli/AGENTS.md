@@ -66,7 +66,7 @@ def greet(name: str) -> None:
 All edits to `USAGE.md` must pass verification before committing:
 
 ```bash
-uvx showboat verify
+uvx showboat verify USAGE.md
 ```
 
-Do not commit changes to `USAGE.md` unless `uvx showboat verify` exits successfully.
+Do not commit changes to `USAGE.md` unless `uvx showboat verify USAGE.md` exits successfully.

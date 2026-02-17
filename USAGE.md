@@ -52,15 +52,11 @@ Options:
 
 Example usage:
 
-```bash
-uv run recipes generalize --src /path/to/repo --dst /path/to/output
-```
+    uv run recipes generalize --src /path/to/repo --dst /path/to/output
 
-```output
-Template created: /path/to/output/cookiecutter-myproject
-  package detected: mypackage
-  cookiecutter.json: {'project_name': 'Myproject', 'project_slug': 'myproject', 'package_name': 'mypackage'}
-```
+    Template created: /path/to/output/cookiecutter-myproject
+      package detected: mypackage
+      cookiecutter.json: {'project_name': 'Myproject', 'project_slug': 'myproject', 'package_name': 'mypackage'}
 
 The generated template includes a `cookiecutter.json` with `project_name`, `project_slug`, and `package_name` variables, a `{{cookiecutter.project_slug}}/` skeleton directory, and the package directory renamed to `{{cookiecutter.package_name}}/`.
 
@@ -116,35 +112,31 @@ Output formats (`-o` / `--output`):
 
 Example:
 
-```bash
-uv run recipes meld makefiles source.mk target.mk -o json
-```
+    uv run recipes meld makefiles source.mk target.mk -o json
 
-```output
-{
-  "new_targets": [
-    "lint",
-    "deploy"
-  ],
-  "modified_targets": [
-    "test"
-  ],
-  "removed_targets": [],
-  "new_variables": {
-    "DEPLOY_TARGET": {
-      "operator": ":=",
-      "value": "production",
-      "comments": []
+    {
+      "new_targets": [
+        "lint",
+        "deploy"
+      ],
+      "modified_targets": [
+        "test"
+      ],
+      "removed_targets": [],
+      "new_variables": {
+        "DEPLOY_TARGET": {
+          "operator": ":=",
+          "value": "production",
+          "comments": []
+        }
+      },
+      "changed_variables": {},
+      "new_phony": [
+        "deploy",
+        "lint"
+      ],
+      "help_changes": {}
     }
-  },
-  "changed_variables": {},
-  "new_phony": [
-    "deploy",
-    "lint"
-  ],
-  "help_changes": {}
-}
-```
 
 ## Tests
 
@@ -152,40 +144,4 @@ Tests verify all subcommands using Click's `CliRunner`. Every subcommand is cove
 
 ```bash
 uv run pytest tests/test_cli.py -v
-```
-
-```output
-============================= test session starts ==============================
-platform linux -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- /home/user/recipes/.venv/bin/python
-cachedir: .pytest_cache
-rootdir: /home/user/recipes
-configfile: pyproject.toml
-plugins: mock-3.15.1, cov-7.0.0
-collecting ... collected 23 items
-
-tests/test_cli.py::test_no_args_shows_help PASSED                        [  4%]
-tests/test_cli.py::test_help_subcommand PASSED                           [  8%]
-tests/test_cli.py::test_help_flag PASSED                                 [ 13%]
-tests/test_cli.py::test_commands_listed_alphabetically PASSED            [ 17%]
-tests/test_cli.py::test_generalize_appears_in_help PASSED                [ 21%]
-tests/test_cli.py::test_generalize_requires_dst PASSED                   [ 26%]
-tests/test_cli.py::test_generalize_creates_template PASSED               [ 30%]
-tests/test_cli.py::test_generalize_templates_pyproject_toml PASSED       [ 34%]
-tests/test_cli.py::test_generalize_templates_readme_heading PASSED       [ 39%]
-tests/test_cli.py::test_generalize_custom_template_name PASSED           [ 43%]
-tests/test_cli.py::test_generalize_src_defaults_to_cwd PASSED            [ 47%]
-tests/test_cli.py::test_generalize_fails_if_template_exists PASSED       [ 52%]
-tests/test_cli.py::test_generalize_replaces_package_name_in_py_files PASSED [ 56%]
-tests/test_cli.py::test_meld_group_appears_in_help PASSED                [ 60%]
-tests/test_cli.py::test_meld_makefiles_appears_in_meld_help PASSED       [ 65%]
-tests/test_cli.py::test_meld_makefiles_analysis_output PASSED            [ 69%]
-tests/test_cli.py::test_meld_makefiles_json_output PASSED                [ 73%]
-tests/test_cli.py::test_meld_makefiles_detects_modified_target PASSED    [ 78%]
-tests/test_cli.py::test_meld_makefiles_detects_new_variables PASSED      [ 82%]
-tests/test_cli.py::test_meld_makefiles_diff_output PASSED                [ 86%]
-tests/test_cli.py::test_meld_makefiles_prompt_output PASSED              [ 91%]
-tests/test_cli.py::test_meld_makefiles_nonexistent_source PASSED         [ 95%]
-tests/test_cli.py::test_meld_makefiles_nonexistent_target PASSED         [100%]
-
-============================== 23 passed in 0.45s ==============================
 ```
