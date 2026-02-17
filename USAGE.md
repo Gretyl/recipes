@@ -140,8 +140,4 @@ Example:
 
 ## Tests
 
-Tests verify all subcommands using Click's `CliRunner`. Every subcommand is covered by red/green TDD:
-
-```bash
-uv run pytest tests/test_cli.py -v
-```
+See `tests/test_cli.py` for full coverage of every subcommand via Click's `CliRunner`.
