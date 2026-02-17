@@ -56,7 +56,7 @@ Example usage:
 uv run recipes generalize --src /path/to/repo --dst /path/to/output
 ```
 
-```
+```output
 Template created: /path/to/output/cookiecutter-myproject
   package detected: mypackage
   cookiecutter.json: {'project_name': 'Myproject', 'project_slug': 'myproject', 'package_name': 'mypackage'}
