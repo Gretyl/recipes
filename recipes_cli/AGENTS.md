@@ -21,19 +21,23 @@ recipes <subcommand>
 
 Every CLI subcommand — both new proposals and pre-existing commands — must satisfy three requirements:
 
-1. **Red/green TDD.** Write a failing test *first* (`red`), then implement just enough code to make it pass (`green`). Tests live in `tests/test_cli.py` and use Click's `CliRunner`.
+1. **Red/green TDD.** Write a failing test *first* (`red`), then implement just enough code to make it pass (`green`). Each subcommand has its own test file under `tests/cli/` (see `tests/AGENTS.md`). Tests use Click's `CliRunner`.
 2. **Pydantic type signatures.** Subcommand inputs and outputs that carry structured data must be expressed as Pydantic models. This gives you runtime validation, serialisation, and self-documenting schemas for free.
 3. **Clean `mypy`.** All CLI code must pass `mypy` with the strict settings defined in `pyproject.toml`. Run `make mypy` before committing.
 
 ## Adding a subcommand
 
-1. Write a failing test:
+1. Write a failing test in the appropriate file under `tests/cli/`:
 
 ```python
-# in tests/test_cli.py
+# in tests/cli/test_greet.py
 
-def test_greet_command() -> None:
-    runner = CliRunner()
+from click.testing import CliRunner
+
+from recipes_cli.tui.cli import cli
+
+
+def test_greet_command(runner: CliRunner) -> None:
     result = runner.invoke(cli, ["greet", "World"])
     assert result.exit_code == 0
     assert "Hello, World!" in result.output
