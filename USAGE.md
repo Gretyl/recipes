@@ -7,11 +7,11 @@ The recipes CLI is the repo-local command-line interface provided by the `recipe
 Bare invocation (no arguments) displays help with all available subcommands:
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()'
+uv run recipes
 ```
 
 ```output
-Usage: -c [OPTIONS] COMMAND [ARGS]...
+Usage: recipes [OPTIONS] COMMAND [ARGS]...
 
   Recipes CLI.
 
@@ -29,11 +29,11 @@ Commands:
 The `generalize` subcommand converts an existing Python repository into a Cookiecutter template. It auto-detects the package directory (first folder with `__init__.py`), templates `pyproject.toml` and `README.md`, and replaces the package name in all templatable files (`.py`, `.toml`, `.md`, `.json`, `.yaml`, `.yml`, `.txt`).
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' generalize --help
+uv run recipes generalize --help
 ```
 
 ```output
-Usage: -c generalize [OPTIONS]
+Usage: recipes generalize [OPTIONS]
 
   Create a Cookiecutter template from an existing repo.
 
@@ -53,7 +53,7 @@ Options:
 Example usage:
 
 ```bash
-recipes generalize --src /path/to/repo --dst /path/to/output
+uv run recipes generalize --src /path/to/repo --dst /path/to/output
 ```
 
 ```
@@ -69,11 +69,11 @@ The generated template includes a `cookiecutter.json` with `project_name`, `proj
 The `meld` command is a subgroup for comparing and merging features between files. Currently it contains one subcommand: `makefiles`.
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' meld --help
+uv run recipes meld --help
 ```
 
 ```output
-Usage: -c meld [OPTIONS] COMMAND [ARGS]...
+Usage: recipes meld [OPTIONS] COMMAND [ARGS]...
 
   Meld features between files.
 
@@ -89,11 +89,11 @@ Commands:
 Parses two Makefiles structurally (targets, variables, `.PHONY` declarations, help entries) and reports differences. Supports four output formats.
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' meld makefiles --help
+uv run recipes meld makefiles --help
 ```
 
 ```output
-Usage: -c meld makefiles [OPTIONS] SOURCE TARGET
+Usage: recipes meld makefiles [OPTIONS] SOURCE TARGET
 
   Meld features from source Makefile to target Makefile.
 
@@ -117,7 +117,7 @@ Output formats (`-o` / `--output`):
 Example:
 
 ```bash
-/home/user/recipes/.venv/bin/python -c 'from recipes_cli.tui.cli import cli; cli()' meld makefiles source.mk target.mk -o json
+uv run recipes meld makefiles source.mk target.mk -o json
 ```
 
 ```output
@@ -151,7 +151,7 @@ Example:
 Tests verify all subcommands using Click's `CliRunner`. Every subcommand is covered by red/green TDD:
 
 ```bash
-/home/user/recipes/.venv/bin/python -m pytest tests/test_cli.py -v
+uv run pytest tests/test_cli.py -v
 ```
 
 ```output
