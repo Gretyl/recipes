@@ -12,19 +12,11 @@ import subprocess
 import pytest
 from cookiecutter.main import cookiecutter
 
+from tests.helpers import paths
+
 TEMPLATE_DIRECTORY = str(
     pathlib.Path(__file__).parent.parent / "cookbook" / "python-project"
 )
-
-
-def paths(directory: pathlib.Path) -> set[str]:
-    """Return a set of all relative paths (files and dirs) under *directory*."""
-    all_paths = list(directory.glob("**/*"))
-    return {
-        str(p.relative_to(directory))
-        for p in all_paths
-        if str(p.relative_to(directory)) != "."
-    }
 
 
 class TestBakeDefaults:

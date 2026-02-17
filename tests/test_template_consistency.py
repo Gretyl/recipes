@@ -16,10 +16,6 @@ RC_PYPROJECT = (
 )
 
 
-def _read(path: pathlib.Path) -> str:
-    return path.read_text()
-
-
 def _extract_section(text: str, header: str) -> str:
     """Extract a TOML section by header, returning lines until next section."""
     lines = text.splitlines()
@@ -50,13 +46,13 @@ class TestPythonVersionParity:
     """Both templates must target the same Python version."""
 
     def test_requires_python_matches(self) -> None:
-        pp = _extract_value(_read(PP_PYPROJECT), "requires-python")
-        rc = _extract_value(_read(RC_PYPROJECT), "requires-python")
+        pp = _extract_value(PP_PYPROJECT.read_text(), "requires-python")
+        rc = _extract_value(RC_PYPROJECT.read_text(), "requires-python")
         assert pp == rc, f"python-project: {pp}, repo-cli: {rc}"
 
     def test_mypy_python_version_matches(self) -> None:
-        pp = _extract_value(_read(PP_PYPROJECT), "python_version")
-        rc = _extract_value(_read(RC_PYPROJECT), "python_version")
+        pp = _extract_value(PP_PYPROJECT.read_text(), "python_version")
+        rc = _extract_value(RC_PYPROJECT.read_text(), "python_version")
         assert pp == rc, f"python-project: {pp}, repo-cli: {rc}"
 
 
@@ -64,8 +60,8 @@ class TestMypyStrictSettings:
     """Both templates must use identical strict mypy settings."""
 
     def test_mypy_settings_match(self) -> None:
-        pp_mypy = _extract_section(_read(PP_PYPROJECT), "[tool.mypy]")
-        rc_mypy = _extract_section(_read(RC_PYPROJECT), "[tool.mypy]")
+        pp_mypy = _extract_section(PP_PYPROJECT.read_text(), "[tool.mypy]")
+        rc_mypy = _extract_section(RC_PYPROJECT.read_text(), "[tool.mypy]")
         assert pp_mypy == rc_mypy, (
             f"mypy settings differ:\npython-project:\n{pp_mypy}\n\nrepo-cli:\n{rc_mypy}"
         )
@@ -80,7 +76,7 @@ class TestDevDependencyBaseline:
             ("python-project", PP_PYPROJECT),
             ("repo-cli", RC_PYPROJECT),
         ]:
-            text = _read(path)
+            text = path.read_text()
             dev_section = _extract_section(text, "[dependency-groups]")
             for dep in required:
                 assert f'"{dep}"' in dev_section, (
@@ -96,7 +92,7 @@ class TestBuildBackendMatch:
             ("python-project", PP_PYPROJECT),
             ("repo-cli", RC_PYPROJECT),
         ]:
-            text = _read(path)
+            text = path.read_text()
             assert 'build-backend = "hatchling.build"' in text, (
                 f"{name} template does not use hatchling"
             )
@@ -110,7 +106,7 @@ class TestDependencyMatch:
             ("python-project", PP_PYPROJECT),
             ("repo-cli", RC_PYPROJECT),
         ]:
-            text = _read(path)
+            text = path.read_text()
             assert '"click"' in text, f"{name} missing click dependency"
 
     def test_pydantic_in_both(self) -> None:
@@ -118,5 +114,5 @@ class TestDependencyMatch:
             ("python-project", PP_PYPROJECT),
             ("repo-cli", RC_PYPROJECT),
         ]:
-            text = _read(path)
+            text = path.read_text()
             assert '"pydantic"' in text, f"{name} missing pydantic dependency"
