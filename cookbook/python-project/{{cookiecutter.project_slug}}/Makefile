@@ -34,19 +34,19 @@ clean:
 
 test: check format
 	@echo "🧪 Running tests with coverage..."
-	@pytest --doctest-modules --cov={{cookiecutter.package_name}} -v $(PYTHON_DIRS)
+	@uv run pytest --doctest-modules --cov={{cookiecutter.package_name}} -v $(PYTHON_DIRS)
 
 check:
 	@echo "🐶 Checking code with ruff (fixing issues)..."
-	@ruff check --fix
+	@uv run ruff check --fix
 
 format:
 	@echo "✍️  Formatting code with ruff..."
-	@ruff format
+	@uv run ruff format
 
 mypy: format check
 	@echo "🥧  Running mypy..."
-	@mypy $(PYTHON_DIRS)
+	@uv run mypy $(PYTHON_DIRS)
 
 dist: test
 	@echo "📦 Preparing versioned release..."
