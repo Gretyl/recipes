@@ -27,3 +27,7 @@ Use `make <target>` for everyday development tasks. Run `make` with no arguments
 | `make dist` | Validate versions, tags, and build a release. | At release time only. |
 
 **Tip:** `make test` is the single command that gates commits — it runs `check`, `format`, and `pytest` in sequence so you catch lint, formatting, and logic issues in one pass.
+
+## Pull Request Conventions
+
+When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. List all commits in-order as the **PR body**.

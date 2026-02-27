@@ -92,3 +92,7 @@ test: add coverage for generalize edge cases
 chore(deps): bump ruff to 0.8.x
 refactor(recipes): simplify hello_world module
 ```
+
+## Pull Request Conventions
+
+When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. List all commits in-order as the **PR body**.
