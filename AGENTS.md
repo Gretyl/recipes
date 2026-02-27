@@ -14,7 +14,35 @@ Set up the development environment:
 uv sync && direnv allow
 ```
 
-Run `make test` before committing — it runs ruff check, ruff format, then pytest in sequence. See `Makefile` for all available targets and `recipes_cli/AGENTS.md` for CLI conventions.
+### Makefile targets
+
+Run `make help` to list all targets. The most important ones:
+
+| Target | What it does | When to use it |
+|--------|-------------|----------------|
+| `make test` | Runs `check` + `format`, then `pytest` with coverage and doctests | **Before every commit.** This is the single gate that must pass. |
+| `make check` | `ruff check --fix` — lints and auto-fixes | While iterating on code; also runs automatically as part of `make test` |
+| `make format` | `ruff format` — formats all Python files | While iterating on code; also runs automatically as part of `make test` |
+| `make mypy` | `mypy` over `recipes/`, `recipes_cli/`, and `tests/` (runs `format` + `check` first) | Before committing CLI or library changes — required for CLI code |
+| `make clean` | Removes caches, `.venv/`, `uv.lock`, `dist/`, etc. | When you need a fresh environment |
+| `make dist` | Runs `test`, then validates version/tag/changelog consistency and builds a release | Release prep only |
+
+**Always run `make test` before committing.** For CLI changes, also run `make mypy` — strict type-checking is required for all `recipes_cli/` code.
+
+### `recipes` CLI
+
+The `recipes` console script (entry point: `recipes_cli.tui.cli:cli`) provides project-support tooling that goes beyond what shell one-liners can do. See `recipes_cli/AGENTS.md` for architecture decisions and development standards (TDD, Pydantic models, mypy).
+
+Available subcommands:
+
+| Subcommand | Purpose | Example |
+|------------|---------|---------|
+| `recipes generalize` | Create a Cookiecutter template from an existing repo | `recipes generalize --src . --dst /tmp/tpl` |
+| `recipes meld makefiles` | Compare two Makefiles and report feature differences | `recipes meld makefiles Makefile other/Makefile -o analysis` |
+
+`recipes meld makefiles` supports four output formats via `--output` / `-o`: `analysis` (default human-readable summary), `prompt` (structured prompt for Claude), `diff` (unified diff), and `json` (machine-readable).
+
+When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: write a failing test first, implement with Pydantic models, then verify with `make test` and `make mypy`.
 
 ## Commit Conventions
 
