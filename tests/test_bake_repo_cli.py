@@ -74,6 +74,44 @@ def test_cli_imports_template(baked: pathlib.Path) -> None:
     assert "cli.add_command(template)" in cli_py
 
 
+def test_status_module_exists(baked: pathlib.Path) -> None:
+    assert (baked / "demo_repo_cli" / "tui" / "status.py").is_file()
+
+
+def test_dashboard_module_exists(baked: pathlib.Path) -> None:
+    assert (baked / "demo_repo_cli" / "tui" / "dashboard.py").is_file()
+
+
+def test_status_tests_exist(baked: pathlib.Path) -> None:
+    assert (baked / "tests" / "test_status.py").is_file()
+
+
+def test_dashboard_tests_exist(baked: pathlib.Path) -> None:
+    assert (baked / "tests" / "test_dashboard.py").is_file()
+
+
+def test_cli_imports_status(baked: pathlib.Path) -> None:
+    cli_py = (baked / "demo_repo_cli" / "tui" / "cli.py").read_text()
+    assert "from demo_repo_cli.tui.status import status" in cli_py
+    assert "cli.add_command(status)" in cli_py
+
+
+def test_cli_imports_dashboard(baked: pathlib.Path) -> None:
+    cli_py = (baked / "demo_repo_cli" / "tui" / "cli.py").read_text()
+    assert "from demo_repo_cli.tui.dashboard import dashboard" in cli_py
+    assert "cli.add_command(dashboard)" in cli_py
+
+
+def test_pyproject_rich_dev_dependency(baked: pathlib.Path) -> None:
+    pyproject = (baked / "pyproject.toml").read_text()
+    assert '"rich"' in pyproject
+
+
+def test_pyproject_textual_dev_dependency(baked: pathlib.Path) -> None:
+    pyproject = (baked / "pyproject.toml").read_text()
+    assert '"textual"' in pyproject
+
+
 def test_core_files_exist(baked: pathlib.Path) -> None:
     assert (baked / "demo_repo_cli" / "tui" / "__init__.py").is_file()
     assert (baked / "demo_repo_cli" / "tui" / "cli.py").is_file()
@@ -102,9 +140,13 @@ def test_shared_file_tree(baked: pathlib.Path) -> None:
     assert "demo_repo_cli/tui" in tree
     assert "demo_repo_cli/tui/__init__.py" in tree
     assert "demo_repo_cli/tui/cli.py" in tree
+    assert "demo_repo_cli/tui/dashboard.py" in tree
+    assert "demo_repo_cli/tui/status.py" in tree
     assert "demo_repo_cli/tui/template.py" in tree
     assert "tests" in tree
     assert "tests/test_cli.py" in tree
+    assert "tests/test_dashboard.py" in tree
+    assert "tests/test_status.py" in tree
     assert "tests/test_template.py" in tree
     assert "tests/test_template_apply.py" in tree
     assert "tests/test_template_prepare.py" in tree
