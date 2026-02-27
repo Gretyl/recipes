@@ -1,5 +1,7 @@
 import click
 
+from {{cookiecutter.package_name}}.tui.dashboard import dashboard
+from {{cookiecutter.package_name}}.tui.status import status
 from {{cookiecutter.package_name}}.tui.template import template
 
 
@@ -33,6 +35,8 @@ def help(ctx: click.Context) -> None:
         click.echo(parent.get_help())
 
 
+cli.add_command(dashboard)
+cli.add_command(status)
 cli.add_command(template)
 
 if __name__ == "__main__":

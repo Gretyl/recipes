@@ -18,12 +18,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "mypy",
     "pytest",
     "pytest-cov",
     "pytest-mock",
     "pyyaml",
+    "rich",
     "ruff",
-    "mypy",
+    "textual",
 ]
 
 [tool.hatch.build.targets.wheel]
