@@ -25,13 +25,15 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
   tui/
     __init__.py
     cli.py          # Click entry point (OrderedGroup)
+    dashboard.py    # Textual TUI dashboard application
+    status.py       # Rich-formatted project status display
     template.py     # Cog-based README template management
 ```
 
 - **Entry point:** `{{cookiecutter.target_repo}} = "{{cookiecutter.package_name}}.tui.cli:cli"` (defined in `pyproject.toml`)
 - **Framework:** Click with `OrderedGroup` for alphabetically-sorted subcommands
-- **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group
-- **Template command:** The `template` group is defined in `template.py` and registered via `cli.add_command(template)` in `cli.py`
+- **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group via `cli.add_command()`
+- **Rich/Textual stubs:** `status.py` and `dashboard.py` are starter modules demonstrating Rich console output and Textual TUI apps. Both are available as dev dependencies — extend or replace them as the project grows.
 
 ## Development standards
 
@@ -81,6 +83,33 @@ Then from a Makefile target:
 greet:
 	@{{cookiecutter.target_repo}} greet World
 ```
+
+## CLI commands
+
+All commands are listed alphabetically by `OrderedGroup`. Run `{{cookiecutter.target_repo}} --help` to see the current list.
+
+| Command | Description |
+|---|---|
+| `dashboard` | Launch the interactive Textual TUI. |
+| `hello` | Say hello — a minimal stub command. |
+| `help` | Show the top-level help message. |
+| `status` | Display project metadata in a Rich-formatted table. |
+| `template` | Manage the README Cog template (`apply`, `prepare`). |
+
+## Makefile targets
+
+Use `make <target>` for everyday development tasks. Run `make` with no arguments to see all targets.
+
+| Target | Description | When to use |
+|---|---|---|
+| `make test` | Lint, format, then run pytest with coverage. | Before every commit. |
+| `make check` | Lint and auto-fix with ruff. | Quick lint pass. |
+| `make format` | Format code with ruff. | After writing new code. |
+| `make mypy` | Type-check with strict mypy (runs format and check first). | Before committing type-sensitive changes. |
+| `make clean` | Remove build, cache, venv, lock, and dist artifacts. | When resetting the dev environment. |
+| `make dist` | Validate versions, tags, and build a release. | At release time only. |
+
+**Tip:** `make test` is the single command that gates commits — it runs `check`, `format`, and `pytest` in sequence so you catch lint, formatting, and logic issues in one pass.
 
 ## Relation to Makefile
 
