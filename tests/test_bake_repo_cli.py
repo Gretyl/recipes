@@ -222,9 +222,9 @@ class TestBakeWithWorkflow:
 class TestBakeWithoutWorkflow:
     """Tests specific to include_github_workflow='no'."""
 
-    @pytest.fixture()
-    def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
-        return _bake(tmp_path, workflow="no")
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        return _bake(tmp_path_factory.mktemp("no-workflow"), workflow="no")
 
     def test_no_github_directory(self, baked: pathlib.Path) -> None:
         assert not (baked / ".github").exists()

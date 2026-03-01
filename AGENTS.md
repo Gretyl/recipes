@@ -20,14 +20,14 @@ Run `make help` to list all targets. The most important ones:
 
 | Target | What it does | When to use it |
 |--------|-------------|----------------|
-| `make test` | Runs `check` + `format`, then `pytest` with coverage and doctests | **Before every commit.** This is the single gate that must pass. |
-| `make check` | `ruff check --fix` — lints and auto-fixes | While iterating on code; also runs automatically as part of `make test` |
-| `make format` | `ruff format` — formats all Python files | While iterating on code; also runs automatically as part of `make test` |
-| `make mypy` | `mypy` over `recipes/`, `recipes_cli/`, and `tests/` (runs `format` + `check` first) | Before committing CLI or library changes — required for CLI code |
+| `make test` | Runs `check` + `format` + `mypy`, then `uv run pytest` with coverage and doctests | **Before every commit.** This is the single gate that must pass. |
+| `make check` | `uv run ruff check --fix` — lints and auto-fixes | While iterating on code; also runs automatically as part of `make test` |
+| `make format` | `uv run ruff format` — formats all Python files | While iterating on code; also runs automatically as part of `make test` |
+| `make mypy` | `uv run mypy` over `recipes/`, `recipes_cli/`, and `tests/` (runs `format` + `check` first) | Also runs automatically as part of `make test` |
 | `make clean` | Removes caches, `.venv/`, `uv.lock`, `dist/`, etc. | When you need a fresh environment |
 | `make dist` | Runs `test`, then validates version/tag/changelog consistency and builds a release | Release prep only |
 
-**Always run `make test` before committing.** For CLI changes, also run `make mypy` — strict type-checking is required for all `recipes_cli/` code.
+**Always run `make test` before committing.** It includes `mypy` — strict type-checking is required for all code.
 
 ### `recipes` CLI
 
@@ -37,10 +37,10 @@ Available subcommands:
 
 | Subcommand | Purpose | Example |
 |------------|---------|---------|
-| `recipes generalize` | Create a Cookiecutter template from an existing repo | `recipes generalize --src . --dst /tmp/tpl` |
-| `recipes meld makefiles` | Compare two Makefiles and report feature differences | `recipes meld makefiles Makefile other/Makefile -o analysis` |
+| `uv run recipes generalize` | Create a Cookiecutter template from an existing repo | `uv run recipes generalize --src . --dst /tmp/tpl` |
+| `uv run recipes meld makefiles` | Compare two Makefiles and report feature differences | `uv run recipes meld makefiles Makefile other/Makefile -o analysis` |
 
-`recipes meld makefiles` supports four output formats via `--output` / `-o`: `analysis` (default human-readable summary), `prompt` (structured prompt for Claude), `diff` (unified diff), and `json` (machine-readable).
+`uv run recipes meld makefiles` supports four output formats via `--output` / `-o`: `analysis` (default human-readable summary), `prompt` (structured prompt for Claude), `diff` (unified diff), and `json` (machine-readable).
 
 When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: write a failing test first, implement with Pydantic models, then verify with `make test` and `make mypy`.
 
