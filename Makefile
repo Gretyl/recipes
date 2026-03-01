@@ -8,7 +8,7 @@ help:
 	@printf "%-12s %s\n" "dist" "Prepare a versioned release in dist/."
 	@printf "%-12s %s\n" "format" "Format code using ruff."
 	@printf "%-12s %s\n" "mypy" "Type-check sources with mypy after format/check."
-	@printf "%-12s %s\n" "test" "Run tests with coverage after check and format."
+	@printf "%-12s %s\n" "test" "Run tests with coverage after check, format, and mypy."
 
 # Define the directories to be checked and tested
 PYTHON_DIRS = recipes/ recipes_cli/ tests/
@@ -32,7 +32,7 @@ clean:
 		uv.lock \
 		.venv/
 
-test: check format
+test: check format mypy
 	@echo "🧪 Running tests with coverage..."
 	@uv run pytest --doctest-modules --cov=recipes --cov=recipes_cli -v $(PYTHON_DIRS)
 
