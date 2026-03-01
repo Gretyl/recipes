@@ -36,7 +36,9 @@ def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
 
 
 @pytest.fixture(scope="module", params=["yes", "no"])
-def baked(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+def baked(
+    request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory
+) -> pathlib.Path:
     return _bake(tmp_path_factory.mktemp("shared"), workflow=request.param)
 
 

@@ -53,6 +53,10 @@ ignore_missing_imports = true
 module = "recipes_cli.*"
 ignore_missing_imports = true
 
+[[tool.mypy.overrides]]
+module = "cookiecutter.*"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["slow: marks tests that install and run baked projects (deselect with '-m \"not slow\"')"]
