@@ -22,8 +22,9 @@ TEMPLATE_DIRECTORY = str(
 class TestBakeDefaults:
     """Bake with default context values from cookiecutter.json."""
 
-    @pytest.fixture()
-    def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("defaults")
         cookiecutter(
             template=TEMPLATE_DIRECTORY,
             output_dir=str(tmp_path),
@@ -285,8 +286,9 @@ class TestMakeDistValidation:
 class TestBakeCustomContext:
     """Bake with custom context to verify variable substitution."""
 
-    @pytest.fixture()
-    def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("custom")
         cookiecutter(
             template=TEMPLATE_DIRECTORY,
             output_dir=str(tmp_path),
