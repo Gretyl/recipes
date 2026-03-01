@@ -35,9 +35,9 @@ def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture(params=["yes", "no"])
-def baked(request: pytest.FixtureRequest, tmp_path: pathlib.Path) -> pathlib.Path:
-    return _bake(tmp_path, workflow=request.param)
+@pytest.fixture(scope="module", params=["yes", "no"])
+def baked(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+    return _bake(tmp_path_factory.mktemp("shared"), workflow=request.param)
 
 
 def test_output_directory_exists(baked: pathlib.Path) -> None:
@@ -168,9 +168,9 @@ def test_shared_file_tree(baked: pathlib.Path) -> None:
 class TestBakeWithWorkflow:
     """Tests specific to include_github_workflow='yes'."""
 
-    @pytest.fixture()
-    def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
-        return _bake(tmp_path, workflow="yes")
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        return _bake(tmp_path_factory.mktemp("workflow"), workflow="yes")
 
     def test_github_workflow_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".github" / "workflows" / "update-readme.yml").is_file()
