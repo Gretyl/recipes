@@ -44,16 +44,16 @@ cookiecutter cookbook/python-project/
 ## Creating a new template from an existing project
 
 ```bash
-recipes generalize --src /path/to/repo --dst /path/to/output
+uv run recipes generalize --src /path/to/repo --dst /path/to/output
 ```
 
 ## Makefile targets
 
 ```bash
-make check     # ruff check --fix
+make check     # uv run ruff check --fix
 make clean     # remove build/cache/venv/lock artifacts
 make dist      # validate changelog + version, build sdist+wheel
-make format    # ruff format
-make mypy      # mypy after format+check
-make test      # ruff check --fix, ruff format, then pytest --doctest-modules --cov
+make format    # uv run ruff format
+make mypy      # uv run mypy after format+check
+make test      # check, format, mypy, then uv run pytest --doctest-modules --cov
 ```

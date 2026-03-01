@@ -19,14 +19,14 @@ Use `make <target>` for everyday development tasks. Run `make` with no arguments
 
 | Target | Description | When to use |
 |---|---|---|
-| `make test` | Lint, format, then run pytest with coverage. | Before every commit. |
+| `make test` | Lint, format, type-check, then run pytest with coverage. | Before every commit. |
 | `make check` | Lint and auto-fix with ruff. | Quick lint pass. |
 | `make format` | Format code with ruff. | After writing new code. |
 | `make mypy` | Type-check with strict mypy (runs format and check first). | Before committing type-sensitive changes. |
 | `make clean` | Remove build, cache, venv, lock, and dist artifacts. | When resetting the dev environment. |
 | `make dist` | Validate versions, tags, and build a release. | At release time only. |
 
-**Tip:** `make test` is the single command that gates commits — it runs `check`, `format`, and `pytest` in sequence so you catch lint, formatting, and logic issues in one pass.
+**Tip:** `make test` is the single command that gates commits — it runs `check`, `format`, `mypy`, and `pytest` in sequence so you catch lint, formatting, type, and logic issues in one pass.
 
 ## Pull Request Conventions
 

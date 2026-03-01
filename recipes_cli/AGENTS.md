@@ -3,7 +3,7 @@
 The `recipes_cli` package provides a repo-local command-line interface for programmatic project support. It is installed as the `recipes` console script entry point and invoked as:
 
 ```bash
-recipes <subcommand>
+uv run recipes <subcommand>
 ```
 
 ## Scope

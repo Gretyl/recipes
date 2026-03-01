@@ -8,5 +8,6 @@ When changes to a template are ready to commit, run "uvx showboat --help" and th
 - Generated projects use **uv** for dependency management and **direnv** for automatic venv activation (`uv sync && direnv allow`)
 - Python target is **3.13**, build backend is **hatchling**
 - Dev tools: ruff (lint+format), mypy (strict mode), pytest with pytest-cov/pytest-mock
-- `recipes generalize` auto-detects the package dir (first folder with `__init__.py`) and templates it as `{{cookiecutter.package_name}}`; it also replaces the project name in `pyproject.toml`
+- `uv run recipes generalize` auto-detects the package dir (first folder with `__init__.py`) and templates it as `{{cookiecutter.package_name}}`; it also replaces the project name in `pyproject.toml`
 - Text files with extensions `.py`, `.toml`, `.md`, `.json`, `.yaml`, `.yml`, `.txt` get variable substitution; all others are copied as-is
+- Generated projects include a `Makefile` with `make test` as the single pre-commit gate — run `make test` from the repo root to validate template baking via `tests/test_bake_*.py`
