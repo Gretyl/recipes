@@ -95,3 +95,26 @@ class TestBakeDefaults:
 
         pkg = _json.loads((baked / "package.json").read_text())
         assert "scripts" not in pkg, "package.json must not duplicate Makefile interface"
+
+    def test_tsconfig_enables_checkjs_dom_strict(self, baked: pathlib.Path) -> None:
+        """The proposal's authoring story rests on tsc --checkJs over inline JSDoc; DOM lib is required for window/document."""
+        import json as _json
+
+        ts = _json.loads((baked / "tsconfig.json").read_text())
+        opts = ts.get("compilerOptions", {})
+        assert opts.get("checkJs") is True
+        assert opts.get("allowJs") is True
+        assert opts.get("strict") is True
+        assert opts.get("noEmit") is True
+        lib = opts.get("lib", [])
+        assert any(item == "DOM" or item.lower() == "dom" for item in lib)
+
+    def test_tsconfig_includes_src_shared_scripts(self, baked: pathlib.Path) -> None:
+        """The three first-class source roots must be in tsconfig.include."""
+        import json as _json
+
+        ts = _json.loads((baked / "tsconfig.json").read_text())
+        include = set(ts.get("include", []))
+        assert "src/**/*" in include
+        assert "shared/**/*" in include
+        assert "scripts/**/*" in include
