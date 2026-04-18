@@ -5,6 +5,7 @@ with default and custom contexts, then verify the resulting file
 trees and file contents.
 """
 
+import json
 import pathlib
 
 import pytest
@@ -58,7 +59,7 @@ class TestBakeDefaults:
         verify_line = next(
             line
             for line in makefile.splitlines()
-            if line.startswith("verify:") or line.startswith("verify ")
+            if line.startswith(("verify:", "verify "))
         )
         assert "verify-structure" in verify_line
         assert "verify-types" in verify_line
@@ -70,13 +71,9 @@ class TestBakeDefaults:
         assert "ARTIFACT" in makefile
         assert "ARTIFACT ?=" in makefile
 
-    def test_package_json_declares_required_devdeps(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_package_json_declares_required_devdeps(self, baked: pathlib.Path) -> None:
         """The Makefile invokes npx tsc/html-validate/vitest/playwright/tsx — package.json must provide them."""
-        import json as _json
-
-        pkg = _json.loads((baked / "package.json").read_text())
+        pkg = json.loads((baked / "package.json").read_text())
         dev_deps = pkg.get("devDependencies", {})
         for required in (
             "typescript",
@@ -91,16 +88,14 @@ class TestBakeDefaults:
 
     def test_package_json_omits_scripts_block(self, baked: pathlib.Path) -> None:
         """Make is the interface — package.json scripts would compete and confuse."""
-        import json as _json
-
-        pkg = _json.loads((baked / "package.json").read_text())
-        assert "scripts" not in pkg, "package.json must not duplicate Makefile interface"
+        pkg = json.loads((baked / "package.json").read_text())
+        assert "scripts" not in pkg, (
+            "package.json must not duplicate Makefile interface"
+        )
 
     def test_tsconfig_enables_checkjs_dom_strict(self, baked: pathlib.Path) -> None:
         """The proposal's authoring story rests on tsc --checkJs over inline JSDoc; DOM lib is required for window/document."""
-        import json as _json
-
-        ts = _json.loads((baked / "tsconfig.json").read_text())
+        ts = json.loads((baked / "tsconfig.json").read_text())
         opts = ts.get("compilerOptions", {})
         assert opts.get("checkJs") is True
         assert opts.get("allowJs") is True
@@ -111,9 +106,7 @@ class TestBakeDefaults:
 
     def test_tsconfig_includes_src_shared_scripts(self, baked: pathlib.Path) -> None:
         """The three first-class source roots must be in tsconfig.include."""
-        import json as _json
-
-        ts = _json.loads((baked / "tsconfig.json").read_text())
+        ts = json.loads((baked / "tsconfig.json").read_text())
         include = set(ts.get("include", []))
         assert "src/**/*" in include
         assert "shared/**/*" in include
@@ -123,9 +116,7 @@ class TestBakeDefaults:
         self, baked: pathlib.Path
     ) -> None:
         """html-validate is the static-HTML gate — it must extend the recommended preset."""
-        import json as _json
-
-        cfg = _json.loads((baked / ".html-validate.json").read_text())
+        cfg = json.loads((baked / ".html-validate.json").read_text())
         extends = cfg.get("extends", [])
         assert any("html-validate:recommended" in item for item in extends)
 
@@ -185,9 +176,7 @@ class TestBakeDefaults:
         assert "getItem" in mock_src
         assert "setItem" in mock_src
 
-    def test_docs_authoring_and_verification_exist(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_docs_authoring_and_verification_exist(self, baked: pathlib.Path) -> None:
         """docs/authoring.md and docs/verification.md back the README's links and onboard new users."""
         assert (baked / "docs" / "authoring.md").is_file()
         assert (baked / "docs" / "verification.md").is_file()
@@ -272,9 +261,7 @@ class TestBakeWithExample:
         """When the example tree ships, src/ is no longer empty — .gitkeep would be redundant noise."""
         assert not (baked / "src" / ".gitkeep").exists()
 
-    def test_example_e2e_spec_loads_from_public(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_example_e2e_spec_loads_from_public(self, baked: pathlib.Path) -> None:
         """tests/e2e.spec.ts must hit the built artifact under public/ — that's what playwright.config.ts serves and what production deploys."""
         spec = baked / "src" / "hello-artifact" / "tests" / "e2e.spec.ts"
         assert spec.is_file()
@@ -284,9 +271,7 @@ class TestBakeWithExample:
         # It should reference a route, not a file path — playwright serves public/ over HTTP.
         assert "/hello-artifact" in text or "hello-artifact.html" in text
 
-    def test_example_unit_spec_uses_shared_harness(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_example_unit_spec_uses_shared_harness(self, baked: pathlib.Path) -> None:
         """tests/unit.spec.ts must import the shared loader so future artifacts copy the pattern instead of reinventing jsdom setup."""
         spec = baked / "src" / "hello-artifact" / "tests" / "unit.spec.ts"
         assert spec.is_file()
@@ -309,7 +294,10 @@ class TestBakeWithExample:
         prompts_text = prompts.read_text()
         assert "prompt" in prompts_text.lower()
         # README should name the artifact so a reader knows what it is.
-        assert "hello-artifact" in readme.read_text().lower() or "hello artifact" in readme.read_text().lower()
+        assert (
+            "hello-artifact" in readme.read_text().lower()
+            or "hello artifact" in readme.read_text().lower()
+        )
 
 
 class TestBakeCustomContext:
@@ -342,9 +330,7 @@ class TestBakeCustomContext:
         self, baked: pathlib.Path
     ) -> None:
         """package.json's name must reflect project_slug so npm and downstream tooling identify the project correctly."""
-        import json as _json
-
-        pkg = _json.loads((baked / "package.json").read_text())
+        pkg = json.loads((baked / "package.json").read_text())
         assert pkg["name"] == "cosmic-demos"
 
     def test_custom_deploy_host_appears_in_readme(self, baked: pathlib.Path) -> None:
@@ -362,9 +348,7 @@ class TestBakeCustomContext:
         readme = (baked / "README.md").read_text()
         assert readme.startswith("# Cosmic Demos")
 
-    def test_no_default_values_leak_into_text_files(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_no_default_values_leak_into_text_files(self, baked: pathlib.Path) -> None:
         """Sweep every text file for the three default values — any hit means a hardcoded substring escaped Jinja substitution."""
         defaults = ("fresh-artifacts", "Fresh Artifacts", "gretyl.maplecrew.org")
         text_suffixes = {
