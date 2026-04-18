@@ -310,3 +310,39 @@ class TestBakeWithExample:
         assert "prompt" in prompts_text.lower()
         # README should name the artifact so a reader knows what it is.
         assert "hello-artifact" in readme.read_text().lower() or "hello artifact" in readme.read_text().lower()
+
+
+class TestBakeCustomContext:
+    """Bake with custom values for every variable — defaults must not leak into the output."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("custom")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={
+                "project_name": "Cosmic Demos",
+                "project_slug": "cosmic-demos",
+                "deploy_host": "demo.example.com",
+                "include_example_artifact": "yes",
+            },
+        )
+        return tmp_path / "cosmic-demos"
+
+    def test_custom_project_slug_names_output_directory(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The output directory takes its name from project_slug — without this, every bake collides at fresh-artifacts/."""
+        assert baked.is_dir()
+        assert baked.name == "cosmic-demos"
+
+    def test_custom_project_slug_propagates_to_package_json_name(
+        self, baked: pathlib.Path
+    ) -> None:
+        """package.json's name must reflect project_slug so npm and downstream tooling identify the project correctly."""
+        import json as _json
+
+        pkg = _json.loads((baked / "package.json").read_text())
+        assert pkg["name"] == "cosmic-demos"
