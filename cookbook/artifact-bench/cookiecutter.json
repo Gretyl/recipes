@@ -1,0 +1,6 @@
+{
+  "project_name": "Fresh Artifacts",
+  "project_slug": "fresh-artifacts",
+  "deploy_host": "gretyl.maplecrew.org",
+  "include_example_artifact": ["no", "yes"]
+}
