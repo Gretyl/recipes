@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello Artifact</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 32rem; margin: 4rem auto; padding: 0 1rem; }
+      button { font-size: 1.25rem; padding: 0.5rem 1rem; }
+      output { margin-left: 1rem; font-variant-numeric: tabular-nums; }
+    </style>
+  </head>
+  <body>
+    <h1>Hello Artifact</h1>
+    <p>A button-counter that demonstrates JSDoc typing and <code>window.storage</code> persistence.</p>
+    <button id="count-btn" type="button">Click me</button>
+    <output id="count-display">0</output>
+
+    <script>
+      // @ts-check
+      "use strict";
+
+      const KEY = "hello-artifact:count";
+
+      const store = window.storage;
+      const button = /** @type {HTMLButtonElement} */ (
+        document.getElementById("count-btn")
+      );
+      const display = /** @type {HTMLOutputElement} */ (
+        document.getElementById("count-display")
+      );
+
+      /** @type {number} */
+      let count = Number(store?.getItem(KEY) ?? "0");
+      display.value = String(count);
+
+      button.addEventListener("click", () => {
+        count += 1;
+        display.value = String(count);
+        store?.setItem(KEY, String(count));
+      });
+    </script>
+  </body>
+</html>
