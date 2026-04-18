@@ -184,3 +184,17 @@ class TestBakeDefaults:
         mock_src = mock.read_text()
         assert "getItem" in mock_src
         assert "setItem" in mock_src
+
+    def test_docs_authoring_and_verification_exist(
+        self, baked: pathlib.Path
+    ) -> None:
+        """docs/authoring.md and docs/verification.md back the README's links and onboard new users."""
+        assert (baked / "docs" / "authoring.md").is_file()
+        assert (baked / "docs" / "verification.md").is_file()
+
+    def test_manifest_yml_references_deploy_host(self, baked: pathlib.Path) -> None:
+        """gallery.ts reads docs/manifest.yml; the example route must use deploy_host so users see how to fill it in."""
+        manifest = (baked / "docs" / "manifest.yml").read_text()
+        assert "gretyl.maplecrew.org" in manifest
+        # And it must declare the artifacts: top-level key gallery.ts expects.
+        assert "artifacts:" in manifest
