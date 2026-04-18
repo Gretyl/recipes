@@ -153,6 +153,21 @@ class TestBakeDefaults:
         assert "window" in shim.lower() or "Window" in shim
         assert "storage" in shim.lower()
 
+    def test_scripts_implement_build_gallery_check_serve(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The Makefile invokes tsx scripts/{build,gallery}.ts; playwright invokes scripts/serve.ts; check-all is the orchestrator referenced in the proposal."""
+        scripts = baked / "scripts"
+        for name in ("build.ts", "gallery.ts", "check-all.ts", "serve.ts"):
+            assert (scripts / name).is_file(), f"missing scripts/{name}"
+        build_src = (scripts / "build.ts").read_text()
+        # build walks src/ and writes to public/
+        assert "src" in build_src
+        assert "public" in build_src
+        gallery_src = (scripts / "gallery.ts").read_text()
+        assert "manifest.yml" in gallery_src
+        assert "public" in gallery_src
+
     def test_load_artifact_harness_uses_jsdom_and_storage_mock(
         self, baked: pathlib.Path
     ) -> None:
