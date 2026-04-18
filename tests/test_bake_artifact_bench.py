@@ -118,3 +118,27 @@ class TestBakeDefaults:
         assert "src/**/*" in include
         assert "shared/**/*" in include
         assert "scripts/**/*" in include
+
+    def test_html_validate_config_extends_recommended(
+        self, baked: pathlib.Path
+    ) -> None:
+        """html-validate is the static-HTML gate — it must extend the recommended preset."""
+        import json as _json
+
+        cfg = _json.loads((baked / ".html-validate.json").read_text())
+        extends = cfg.get("extends", [])
+        assert any("html-validate:recommended" in item for item in extends)
+
+    def test_playwright_config_targets_e2e_specs(self, baked: pathlib.Path) -> None:
+        """playwright.config.ts must restrict testMatch to e2e.spec.ts so unit specs don't double-run."""
+        cfg = (baked / "playwright.config.ts").read_text()
+        assert "e2e.spec.ts" in cfg
+        assert "testDir" in cfg
+
+    def test_vitest_config_targets_unit_specs_with_jsdom(
+        self, baked: pathlib.Path
+    ) -> None:
+        """vitest.config.ts must scope to unit.spec.ts and use the jsdom environment."""
+        cfg = (baked / "vitest.config.ts").read_text()
+        assert "unit.spec.ts" in cfg
+        assert "jsdom" in cfg
