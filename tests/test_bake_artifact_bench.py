@@ -268,6 +268,10 @@ class TestBakeWithExample:
         content = artifact.read_text()
         assert "@ts-check" in content
 
+    def test_example_bake_omits_src_gitkeep(self, baked: pathlib.Path) -> None:
+        """When the example tree ships, src/ is no longer empty — .gitkeep would be redundant noise."""
+        assert not (baked / "src" / ".gitkeep").exists()
+
     def test_example_e2e_spec_loads_from_public(
         self, baked: pathlib.Path
     ) -> None:
