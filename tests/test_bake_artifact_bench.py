@@ -267,3 +267,20 @@ class TestBakeWithExample:
         assert artifact.is_file()
         content = artifact.read_text()
         assert "@ts-check" in content
+
+    def test_example_sibling_docs_demonstrate_artifact_layout(
+        self, baked: pathlib.Path
+    ) -> None:
+        """An artifact directory pairs artifact.html with PROMPTS.md (history), README.md (status), notes.md (decisions)."""
+        art_dir = baked / "src" / "hello-artifact"
+        prompts = art_dir / "PROMPTS.md"
+        readme = art_dir / "README.md"
+        notes = art_dir / "notes.md"
+        assert prompts.is_file()
+        assert readme.is_file()
+        assert notes.is_file()
+        # PROMPTS.md should look like a prompt log, not an empty placeholder.
+        prompts_text = prompts.read_text()
+        assert "prompt" in prompts_text.lower()
+        # README should name the artifact so a reader knows what it is.
+        assert "hello-artifact" in readme.read_text().lower() or "hello artifact" in readme.read_text().lower()
