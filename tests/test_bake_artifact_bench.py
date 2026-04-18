@@ -346,3 +346,18 @@ class TestBakeCustomContext:
 
         pkg = _json.loads((baked / "package.json").read_text())
         assert pkg["name"] == "cosmic-demos"
+
+    def test_custom_deploy_host_appears_in_readme(self, baked: pathlib.Path) -> None:
+        """The README's gallery section advertises the live URL — without substitution, every fork shows the template author's host."""
+        readme = (baked / "README.md").read_text()
+        assert "demo.example.com" in readme
+
+    def test_custom_deploy_host_appears_in_manifest(self, baked: pathlib.Path) -> None:
+        """docs/manifest.yml drives the gallery; if deploy_host doesn't propagate, the gallery links to the wrong domain."""
+        manifest = (baked / "docs" / "manifest.yml").read_text()
+        assert "demo.example.com" in manifest
+
+    def test_custom_project_name_titles_readme(self, baked: pathlib.Path) -> None:
+        """The README opens with the project name — without it, every fork's first line says 'Fresh Artifacts'."""
+        readme = (baked / "README.md").read_text()
+        assert readme.startswith("# Cosmic Demos")
