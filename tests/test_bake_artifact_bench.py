@@ -198,3 +198,38 @@ class TestBakeDefaults:
         assert "gretyl.maplecrew.org" in manifest
         # And it must declare the artifacts: top-level key gallery.ts expects.
         assert "artifacts:" in manifest
+
+    def test_readme_starts_with_project_name_and_references_deploy_host(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The README is the first thing a cloner reads — it must name the project and point at the deploy URL."""
+        readme = (baked / "README.md").read_text()
+        assert readme.startswith("# Fresh Artifacts")
+        assert "gretyl.maplecrew.org" in readme
+
+    def test_readme_links_to_authoring_and_verification_docs(
+        self, baked: pathlib.Path
+    ) -> None:
+        """README must hand off to docs/ for deeper how-tos so it doesn't reproduce them inline."""
+        readme = (baked / "README.md").read_text()
+        assert "docs/authoring.md" in readme
+        assert "docs/verification.md" in readme
+
+    def test_gitignore_excludes_node_modules_and_build_output(
+        self, baked: pathlib.Path
+    ) -> None:
+        """A fresh clone must not commit node_modules, public/ build output, or test reports."""
+        gitignore = (baked / ".gitignore").read_text()
+        for pattern in (
+            "node_modules",
+            "public/",
+            "test-results",
+            "playwright-report",
+        ):
+            assert pattern in gitignore, f".gitignore missing pattern: {pattern}"
+
+    def test_gitattributes_marks_binary_extensions(self, baked: pathlib.Path) -> None:
+        """recipes generalize-style tools detect binaries via .gitattributes; without entries, binary assets get mangled."""
+        attrs = (baked / ".gitattributes").read_text()
+        for ext in ("png", "jpg"):
+            assert ext in attrs, f".gitattributes missing extension: {ext}"
