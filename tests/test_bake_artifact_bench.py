@@ -142,3 +142,13 @@ class TestBakeDefaults:
         cfg = (baked / "vitest.config.ts").read_text()
         assert "unit.spec.ts" in cfg
         assert "jsdom" in cfg
+
+    def test_claude_storage_shim_declares_window_storage(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Claude artifacts use window.storage; without a shim, every typed artifact errors on first reference."""
+        shim_path = baked / "shared" / "types" / "claude-storage.d.ts"
+        assert shim_path.is_file()
+        shim = shim_path.read_text()
+        assert "window" in shim.lower() or "Window" in shim
+        assert "storage" in shim.lower()
