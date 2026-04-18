@@ -152,3 +152,20 @@ class TestBakeDefaults:
         shim = shim_path.read_text()
         assert "window" in shim.lower() or "Window" in shim
         assert "storage" in shim.lower()
+
+    def test_load_artifact_harness_uses_jsdom_and_storage_mock(
+        self, baked: pathlib.Path
+    ) -> None:
+        """unit specs need a single entry point that mounts an artifact in jsdom with storage mocked."""
+        loader = baked / "shared" / "harness" / "load-artifact.ts"
+        mock = baked / "shared" / "harness" / "storage-mock.ts"
+        assert loader.is_file()
+        assert mock.is_file()
+        loader_src = loader.read_text()
+        assert "jsdom" in loader_src
+        assert "JSDOM" in loader_src
+        # Loader must wire the storage mock into the jsdom window.
+        assert "storage" in loader_src.lower()
+        mock_src = mock.read_text()
+        assert "getItem" in mock_src
+        assert "setItem" in mock_src
