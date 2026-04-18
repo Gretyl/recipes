@@ -5,6 +5,8 @@ When changes to a template are ready to commit, run "uvx showboat --help" and th
 
 ## Template Conventions
 
+These conventions apply to **Python templates** (`python-project`, `repo-cli`). Non-Python templates such as `artifact-bench` follow their own toolchain — see `notes/artifact-bench.md` for the Node/TypeScript stack and design rationale.
+
 - Generated projects use **uv** for dependency management and **direnv** for automatic venv activation (`uv sync && direnv allow`)
 - Python target is **3.13**, build backend is **hatchling**
 - Dev tools: ruff (lint+format), mypy (strict mode), pytest with pytest-cov/pytest-mock
