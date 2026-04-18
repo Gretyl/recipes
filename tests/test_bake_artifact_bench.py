@@ -361,3 +361,58 @@ class TestBakeCustomContext:
         """The README opens with the project name — without it, every fork's first line says 'Fresh Artifacts'."""
         readme = (baked / "README.md").read_text()
         assert readme.startswith("# Cosmic Demos")
+
+    def test_no_default_values_leak_into_text_files(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Sweep every text file for the three default values — any hit means a hardcoded substring escaped Jinja substitution."""
+        defaults = ("fresh-artifacts", "Fresh Artifacts", "gretyl.maplecrew.org")
+        text_suffixes = {
+            ".md",
+            ".json",
+            ".yml",
+            ".yaml",
+            ".html",
+            ".ts",
+            ".js",
+            ".tsx",
+            ".jsx",
+            ".css",
+            ".txt",
+            ".d.ts",
+            ".gitignore",
+            ".gitattributes",
+        }
+        leaks: list[tuple[pathlib.Path, str]] = []
+        for path in baked.rglob("*"):
+            if not path.is_file():
+                continue
+            if path.suffix not in text_suffixes and path.name not in {
+                "Makefile",
+                ".gitignore",
+                ".gitattributes",
+                ".html-validate.json",
+            }:
+                continue
+            try:
+                text = path.read_text()
+            except UnicodeDecodeError:
+                continue
+            for default in defaults:
+                if default in text:
+                    leaks.append((path.relative_to(baked), default))
+        assert not leaks, f"default values leaked into custom-context bake: {leaks}"
+
+    def test_no_unrendered_cookiecutter_tokens(self, baked: pathlib.Path) -> None:
+        """An unrendered `{{ cookiecutter.* }}` is a Jinja substitution that the engine missed — usually a typo or escape gone wrong."""
+        offenders: list[pathlib.Path] = []
+        for path in baked.rglob("*"):
+            if not path.is_file():
+                continue
+            try:
+                text = path.read_text()
+            except UnicodeDecodeError:
+                continue
+            if "cookiecutter." in text and "{{" in text:
+                offenders.append(path.relative_to(baked))
+        assert not offenders, f"unrendered cookiecutter tokens remain: {offenders}"
