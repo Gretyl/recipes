@@ -245,3 +245,25 @@ class TestBakeDefaults:
     def test_default_bake_seeds_public_gitkeep(self, baked: pathlib.Path) -> None:
         """public/ is gitignored except for .gitkeep — preserves the deploy-target directory."""
         assert (baked / "public" / ".gitkeep").is_file()
+
+
+class TestBakeWithExample:
+    """Bake with include_example_artifact=yes — the worked example must survive."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("with-example")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"include_example_artifact": "yes"},
+        )
+        return tmp_path / "fresh-artifacts"
+
+    def test_example_artifact_html_uses_ts_check(self, baked: pathlib.Path) -> None:
+        """The example demonstrates the JSDoc-typed inline-script pattern — @ts-check is the gateway."""
+        artifact = baked / "src" / "hello-artifact" / "artifact.html"
+        assert artifact.is_file()
+        content = artifact.read_text()
+        assert "@ts-check" in content
