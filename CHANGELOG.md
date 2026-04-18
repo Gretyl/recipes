@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript, layered verification harness, optional example artifact).
+
 ## [1.0.0] - 2026-02-13
 
 ### Added
