@@ -40,12 +40,15 @@ class TestBakeDefaults:
     def test_makefile_defines_layered_targets(self, baked: pathlib.Path) -> None:
         """The Makefile is the developer interface — verify/test/build/ci/clean must be wired."""
         makefile = (baked / "Makefile").read_text()
+        # Join line-continuations so multi-line .PHONY declarations parse as one.
+        joined = makefile.replace("\\\n", " ")
         phony_line = next(
-            line for line in makefile.splitlines() if line.startswith(".PHONY:")
+            line for line in joined.splitlines() if line.startswith(".PHONY:")
         )
+        phony_targets = set(phony_line.removeprefix(".PHONY:").split())
         for target in ("verify", "test", "build", "ci", "clean"):
             assert f"{target}:" in makefile, f"missing target: {target}"
-            assert target in phony_line, f"target {target} not declared .PHONY"
+            assert target in phony_targets, f"target {target} not declared .PHONY"
 
     def test_makefile_verify_splits_structure_types_html(
         self, baked: pathlib.Path
