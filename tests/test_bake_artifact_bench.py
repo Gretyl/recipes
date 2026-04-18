@@ -233,3 +233,15 @@ class TestBakeDefaults:
         attrs = (baked / ".gitattributes").read_text()
         for ext in ("png", "jpg"):
             assert ext in attrs, f".gitattributes missing extension: {ext}"
+
+    def test_default_bake_omits_example_artifact(self, baked: pathlib.Path) -> None:
+        """Default include_example_artifact=no — the hello-artifact tree must not survive the post-gen hook."""
+        assert not (baked / "src" / "hello-artifact").exists()
+
+    def test_default_bake_seeds_src_gitkeep(self, baked: pathlib.Path) -> None:
+        """An empty src/ would not be tracked by git; .gitkeep preserves the layout for the first artifact."""
+        assert (baked / "src" / ".gitkeep").is_file()
+
+    def test_default_bake_seeds_public_gitkeep(self, baked: pathlib.Path) -> None:
+        """public/ is gitignored except for .gitkeep — preserves the deploy-target directory."""
+        assert (baked / "public" / ".gitkeep").is_file()
