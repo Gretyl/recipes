@@ -268,6 +268,16 @@ class TestBakeWithExample:
         content = artifact.read_text()
         assert "@ts-check" in content
 
+    def test_example_unit_spec_uses_shared_harness(
+        self, baked: pathlib.Path
+    ) -> None:
+        """tests/unit.spec.ts must import the shared loader so future artifacts copy the pattern instead of reinventing jsdom setup."""
+        spec = baked / "src" / "hello-artifact" / "tests" / "unit.spec.ts"
+        assert spec.is_file()
+        text = spec.read_text()
+        assert "load-artifact" in text, "unit spec must import the shared harness"
+        assert "vitest" in text, "unit spec must use vitest"
+
     def test_example_sibling_docs_demonstrate_artifact_layout(
         self, baked: pathlib.Path
     ) -> None:
