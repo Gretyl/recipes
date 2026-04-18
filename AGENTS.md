@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A collection of Cookiecutter templates, tooling for scaffolding Python projects, and a uv-managed Python project environment. The primary template is `cookbook/python-project/`, which generates a uv-managed Python project with ruff, mypy, pytest, and direnv support.
+A collection of Cookiecutter templates, tooling for scaffolding Python projects, and a uv-managed Python project environment. The cookbook ships three templates: `cookbook/python-project/` (uv-managed Python projects with ruff, mypy, pytest, and direnv), `cookbook/repo-cli/` (Click-based CLI packages targeting an existing repo), and `cookbook/artifact-bench/` (Node/TypeScript workbenches for standalone HTML artifacts).
 
 ## Key Commands
 
