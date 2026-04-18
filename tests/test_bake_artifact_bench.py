@@ -36,3 +36,33 @@ class TestBakeDefaults:
 
     def test_package_json_exists(self, baked: pathlib.Path) -> None:
         assert (baked / "package.json").is_file()
+
+    def test_makefile_defines_layered_targets(self, baked: pathlib.Path) -> None:
+        """The Makefile is the developer interface — verify/test/build/ci/clean must be wired."""
+        makefile = (baked / "Makefile").read_text()
+        phony_line = next(
+            line for line in makefile.splitlines() if line.startswith(".PHONY:")
+        )
+        for target in ("verify", "test", "build", "ci", "clean"):
+            assert f"{target}:" in makefile, f"missing target: {target}"
+            assert target in phony_line, f"target {target} not declared .PHONY"
+
+    def test_makefile_verify_splits_structure_types_html(
+        self, baked: pathlib.Path
+    ) -> None:
+        """verify is the static-checks gate — it must compose the three sub-targets."""
+        makefile = (baked / "Makefile").read_text()
+        verify_line = next(
+            line
+            for line in makefile.splitlines()
+            if line.startswith("verify:") or line.startswith("verify ")
+        )
+        assert "verify-structure" in verify_line
+        assert "verify-types" in verify_line
+        assert "verify-html" in verify_line
+
+    def test_makefile_supports_artifact_scoping(self, baked: pathlib.Path) -> None:
+        """ARTIFACT= is the per-artifact scoping knob the proposal calls out."""
+        makefile = (baked / "Makefile").read_text()
+        assert "ARTIFACT" in makefile
+        assert "ARTIFACT ?=" in makefile
