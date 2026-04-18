@@ -268,6 +268,18 @@ class TestBakeWithExample:
         content = artifact.read_text()
         assert "@ts-check" in content
 
+    def test_example_e2e_spec_loads_from_public(
+        self, baked: pathlib.Path
+    ) -> None:
+        """tests/e2e.spec.ts must hit the built artifact under public/ — that's what playwright.config.ts serves and what production deploys."""
+        spec = baked / "src" / "hello-artifact" / "tests" / "e2e.spec.ts"
+        assert spec.is_file()
+        text = spec.read_text()
+        assert "@playwright/test" in text
+        assert "hello-artifact" in text
+        # It should reference a route, not a file path — playwright serves public/ over HTTP.
+        assert "/hello-artifact" in text or "hello-artifact.html" in text
+
     def test_example_unit_spec_uses_shared_harness(
         self, baked: pathlib.Path
     ) -> None:
