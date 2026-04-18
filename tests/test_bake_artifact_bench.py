@@ -69,3 +69,29 @@ class TestBakeDefaults:
         makefile = (baked / "Makefile").read_text()
         assert "ARTIFACT" in makefile
         assert "ARTIFACT ?=" in makefile
+
+    def test_package_json_declares_required_devdeps(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The Makefile invokes npx tsc/html-validate/vitest/playwright/tsx — package.json must provide them."""
+        import json as _json
+
+        pkg = _json.loads((baked / "package.json").read_text())
+        dev_deps = pkg.get("devDependencies", {})
+        for required in (
+            "typescript",
+            "html-validate",
+            "@playwright/test",
+            "vitest",
+            "jsdom",
+            "tsx",
+            "js-yaml",
+        ):
+            assert required in dev_deps, f"missing devDependency: {required}"
+
+    def test_package_json_omits_scripts_block(self, baked: pathlib.Path) -> None:
+        """Make is the interface — package.json scripts would compete and confuse."""
+        import json as _json
+
+        pkg = _json.loads((baked / "package.json").read_text())
+        assert "scripts" not in pkg, "package.json must not duplicate Makefile interface"
