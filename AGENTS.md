@@ -118,4 +118,4 @@ refactor(recipes): simplify hello_world module
 
 ## Pull Request Conventions
 
-When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. List all commits in-order as the **PR body**.
+When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. Write the **PR body** as a narrative summary of what changed and why — not a commit list. GitHub already surfaces the full commit log; duplicating it in the body is noise during review.
