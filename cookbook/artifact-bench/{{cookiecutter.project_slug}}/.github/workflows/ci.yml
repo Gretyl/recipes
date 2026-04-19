@@ -1,28 +1,20 @@
 # CI workflow for {{cookiecutter.project_slug}}.
 #
-# Two jobs:
+# Runs the fast verify gate on every pull request and on push to main:
+# npm ci + make verify + make test-unit. No browser binaries — the
+# job completes in under a minute.
 #
-# - verify: fast PR-time gate. Runs `npm ci`, `make verify`,
-#   `make test-unit`. No browser binaries, completes in under a
-#   minute.
-#
-# - e2e: gated browser tests. Downloads ~300MB of Playwright browser
-#   binaries (`make setup-ci`) and runs `make test-e2e`. Keeps e2e
-#   off the default PR path; label a PR with `run-e2e` to request a
-#   run against that branch, push to main triggers it on merge, and
-#   workflow_dispatch is the manual escape hatch.
-#
-# See README.md's "CI" section for the trigger-to-step flowchart.
+# End-to-end (browser) tests are deferred to v1.2 via a lightweight
+# rodney-based replacement. See cookbook/notes/artifact-bench.md
+# "Deferred work" for status.
 
 name: CI
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   verify:
@@ -44,24 +36,3 @@ jobs:
 
       - name: Run unit tests
         run: make test-unit
-
-  e2e:
-    runs-on: ubuntu-latest
-    if: >-
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'run-e2e'))
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install CI-locked dependencies (npm + Playwright browsers)
-        run: make setup-ci
-
-      - name: Run e2e tests
-        run: make test-e2e

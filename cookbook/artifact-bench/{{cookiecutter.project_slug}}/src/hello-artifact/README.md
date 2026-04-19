@@ -7,10 +7,12 @@ verification loop on a near-trivial artifact:
 - `@ts-check` + JSDoc on the inline `<script>` — caught by `make verify-types`
 - Standards-compliant HTML — caught by `make verify-html`
 - Vitest + jsdom unit test (`tests/unit.spec.ts`) — `make test-unit`
-- Playwright e2e against the built `public/hello-artifact.html` — `make test-e2e`
+
+Browser-level e2e tests are deferred to a future release (see the
+root README's "CI" section).
 
 ## Status
 
 Stable. Acts as the template's smoke-test artifact; do not delete
-without first replacing the unit/e2e tests with equivalents pointed at
+without first replacing the unit test with an equivalent pointed at
 your own artifact.

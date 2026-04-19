@@ -74,19 +74,24 @@ class TestBakeDefaults:
         assert "ARTIFACT ?=" in makefile
 
     def test_package_json_declares_required_devdeps(self, baked: pathlib.Path) -> None:
-        """The Makefile invokes npx tsc/html-validate/vitest/playwright/tsx — package.json must provide them."""
+        """The Makefile invokes npx tsc/html-validate/vitest/tsx — package.json must provide them."""
         pkg = json.loads((baked / "package.json").read_text())
         dev_deps = pkg.get("devDependencies", {})
         for required in (
             "typescript",
             "html-validate",
-            "@playwright/test",
             "vitest",
             "jsdom",
             "tsx",
             "js-yaml",
         ):
             assert required in dev_deps, f"missing devDependency: {required}"
+
+    def test_package_json_omits_playwright(self, baked: pathlib.Path) -> None:
+        """Playwright is descoped for v1.1; the browser-e2e layer returns in v1.2 via rodney."""
+        pkg = json.loads((baked / "package.json").read_text())
+        dev_deps = pkg.get("devDependencies", {})
+        assert "@playwright/test" not in dev_deps
 
     def test_package_json_omits_scripts_block(self, baked: pathlib.Path) -> None:
         """Make is the interface — package.json scripts would compete and confuse."""
@@ -122,11 +127,9 @@ class TestBakeDefaults:
         extends = cfg.get("extends", [])
         assert any("html-validate:recommended" in item for item in extends)
 
-    def test_playwright_config_targets_e2e_specs(self, baked: pathlib.Path) -> None:
-        """playwright.config.ts must restrict testMatch to e2e.spec.ts so unit specs don't double-run."""
-        cfg = (baked / "playwright.config.ts").read_text()
-        assert "e2e.spec.ts" in cfg
-        assert "testDir" in cfg
+    def test_no_playwright_config(self, baked: pathlib.Path) -> None:
+        """playwright.config.ts is descoped for v1.1; rodney-based e2e in v1.2 won't reuse it."""
+        assert not (baked / "playwright.config.ts").exists()
 
     def test_vitest_config_targets_unit_specs_with_jsdom(
         self, baked: pathlib.Path
@@ -146,13 +149,12 @@ class TestBakeDefaults:
         assert "window" in shim.lower() or "Window" in shim
         assert "storage" in shim.lower()
 
-    def test_scripts_implement_build_gallery_check_serve(
-        self, baked: pathlib.Path
-    ) -> None:
-        """The Makefile invokes tsx scripts/{build,gallery}.ts; playwright invokes scripts/serve.ts; check-all is the orchestrator referenced in the proposal."""
+    def test_scripts_implement_build_gallery_check(self, baked: pathlib.Path) -> None:
+        """The Makefile invokes tsx scripts/{build,gallery}.ts; check-all is the orchestrator referenced in the proposal. scripts/serve.ts is descoped alongside playwright."""
         scripts = baked / "scripts"
-        for name in ("build.ts", "gallery.ts", "check-all.ts", "serve.ts"):
+        for name in ("build.ts", "gallery.ts", "check-all.ts"):
             assert (scripts / name).is_file(), f"missing scripts/{name}"
+        assert not (scripts / "serve.ts").exists()
         build_src = (scripts / "build.ts").read_text()
         # build walks src/ and writes to public/
         assert "src" in build_src
@@ -209,13 +211,11 @@ class TestBakeDefaults:
     def test_gitignore_excludes_node_modules_and_build_output(
         self, baked: pathlib.Path
     ) -> None:
-        """A fresh clone must not commit node_modules, public/ build output, or test reports."""
+        """A fresh clone must not commit node_modules or public/ build output."""
         gitignore = (baked / ".gitignore").read_text()
         for pattern in (
             "node_modules",
             "public/",
-            "test-results",
-            "playwright-report",
         ):
             assert pattern in gitignore, f".gitignore missing pattern: {pattern}"
 
@@ -273,15 +273,11 @@ class TestBakeWithExample:
         """When the example tree ships, src/ is no longer empty — .gitkeep would be redundant noise."""
         assert not (baked / "src" / ".gitkeep").exists()
 
-    def test_example_e2e_spec_loads_from_public(self, baked: pathlib.Path) -> None:
-        """tests/e2e.spec.ts must hit the built artifact under public/ — that's what playwright.config.ts serves and what production deploys."""
+    def test_no_example_e2e_spec(self, baked: pathlib.Path) -> None:
+        """tests/e2e.spec.ts is descoped alongside playwright; the v1.2 rodney-based
+        replacement will land its own replacement example."""
         spec = baked / "src" / "hello-artifact" / "tests" / "e2e.spec.ts"
-        assert spec.is_file()
-        text = spec.read_text()
-        assert "@playwright/test" in text
-        assert "hello-artifact" in text
-        # It should reference a route, not a file path — playwright serves public/ over HTTP.
-        assert "/hello-artifact" in text or "hello-artifact.html" in text
+        assert not spec.exists()
 
     def test_example_unit_spec_uses_shared_harness(self, baked: pathlib.Path) -> None:
         """tests/unit.spec.ts must import the shared loader so future artifacts copy the pattern instead of reinventing jsdom setup."""
@@ -434,14 +430,14 @@ class TestBakeWithWorkflow:
         assert (baked / ".github" / "workflows" / "ci.yml").is_file()
 
     def test_ci_workflow_defines_verify_job(self, baked: pathlib.Path) -> None:
-        """The fast PR-time job must be named verify so readers map it to make verify."""
+        """v1.1 ships a single verify job. The e2e job returns in v1.2 via rodney."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "verify:" in yml
 
-    def test_ci_workflow_defines_e2e_job(self, baked: pathlib.Path) -> None:
-        """The gated browser job must be named e2e so readers map it to make test-e2e."""
+    def test_ci_workflow_has_no_e2e_job(self, baked: pathlib.Path) -> None:
+        """Playwright is descoped for v1.1; no job line should mention e2e."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "e2e:" in yml
+        assert "e2e:" not in yml
 
     def test_ci_workflow_triggers_include_pull_request(
         self, baked: pathlib.Path
@@ -456,20 +452,15 @@ class TestBakeWithWorkflow:
         assert "push:" in yml
         assert "main" in yml
 
-    def test_ci_workflow_triggers_include_workflow_dispatch(
+    def test_ci_workflow_has_no_label_or_dispatch_triggers(
         self, baked: pathlib.Path
     ) -> None:
-        """workflow_dispatch is the escape hatch for running e2e against any branch."""
+        """workflow_dispatch and the run-e2e label gated the descoped e2e job; without e2e, neither is needed."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "workflow_dispatch:" in yml
-
-    def test_ci_workflow_filters_on_run_e2e_label(self, baked: pathlib.Path) -> None:
-        """Propagation: the label name must match what reviewers add to PRs."""
-        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "run-e2e" in yml
+        assert "workflow_dispatch" not in yml
+        assert "run-e2e" not in yml
 
     def test_ci_verify_job_invokes_npm_ci(self, baked: pathlib.Path) -> None:
-        """Verify job does npm ci directly (skipping playwright install) to stay fast."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "npm ci" in yml
 
@@ -481,60 +472,18 @@ class TestBakeWithWorkflow:
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "make test-unit" in yml
 
-    def test_ci_e2e_job_invokes_make_setup_ci(self, baked: pathlib.Path) -> None:
-        """Propagation: e2e routes the heavy install through make setup-ci."""
-        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "make setup-ci" in yml
-
-    def test_ci_e2e_job_invokes_make_test_e2e(self, baked: pathlib.Path) -> None:
-        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "make test-e2e" in yml
-
     # ---- Makefile ----
 
-    def test_makefile_defines_setup_ci_target(self, baked: pathlib.Path) -> None:
-        makefile = (baked / "Makefile").read_text()
-        assert "setup-ci:" in makefile
-
-    def test_makefile_setup_ci_runs_npm_ci_and_playwright(
+    def test_makefile_has_no_setup_ci_or_test_e2e_targets(
         self, baked: pathlib.Path
     ) -> None:
-        """setup-ci installs npm deps + playwright browsers for the e2e job."""
+        """Both descoped alongside playwright for v1.1. They return in v1.2."""
         makefile = (baked / "Makefile").read_text()
-        lines = makefile.splitlines()
-        setup_ci_idx = next(
-            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
-        )
-        recipe = []
-        for line in lines[setup_ci_idx + 1 :]:
-            if line and not line.startswith(("\t", " ")):
-                break
-            recipe.append(line)
-        recipe_text = "\n".join(recipe)
-        assert "npm ci" in recipe_text
-        assert "playwright install" in recipe_text
+        assert "setup-ci:" not in makefile
+        assert "test-e2e:" not in makefile
 
-    def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
-        makefile = (baked / "Makefile").read_text()
-        joined = makefile.replace("\\\n", " ")
-        phony_line = next(
-            line for line in joined.splitlines() if line.startswith(".PHONY:")
-        )
-        assert "setup-ci" in phony_line
-
-    def test_makefile_help_lists_setup_ci(self, baked: pathlib.Path) -> None:
-        """Propagation: make help must advertise the new target."""
-        makefile = (baked / "Makefile").read_text()
-        help_idx = next(
-            i
-            for i, line in enumerate(makefile.splitlines())
-            if line.startswith("help:")
-        )
-        help_block = "\n".join(makefile.splitlines()[help_idx : help_idx + 30])
-        assert "setup-ci" in help_block
-
-    def test_makefile_install_target_untouched(self, baked: pathlib.Path) -> None:
-        """install is the local-dev affordance; setup-ci is the CI equivalent. Both exist side by side."""
+    def test_makefile_install_target_present(self, baked: pathlib.Path) -> None:
+        """install is the local-dev affordance — survives the playwright descope."""
         makefile = (baked / "Makefile").read_text()
         assert "install:" in makefile
 
@@ -548,10 +497,9 @@ class TestBakeWithWorkflow:
         readme = (baked / "README.md").read_text()
         assert ".github/workflows/ci.yml" in readme
 
-    def test_readme_ci_section_names_both_jobs(self, baked: pathlib.Path) -> None:
-        """Propagation: renames to the ci.yml job names must update the README.
-        Scoped to the ## CI section so incidental uses of 'verify' / 'e2e'
-        elsewhere don't hide a regression in the CI docs themselves."""
+    def test_readme_ci_section_names_verify_job(self, baked: pathlib.Path) -> None:
+        """Scoped to the ## CI section so incidental 'verify' mentions elsewhere
+        don't hide a regression in the CI docs themselves."""
         readme = (baked / "README.md").read_text()
         ci_start = readme.find("## CI")
         assert ci_start != -1, "README has no ## CI section"
@@ -560,37 +508,41 @@ class TestBakeWithWorkflow:
             ci_end = len(readme)
         ci_section = readme[ci_start:ci_end].lower()
         assert "verify" in ci_section
-        assert "e2e" in ci_section
 
-    def test_readme_ci_section_documents_run_e2e_label(
+    def test_readme_ci_section_flags_e2e_deferred_to_v1_2(
         self, baked: pathlib.Path
     ) -> None:
-        """Propagation: a reviewer must be able to find the exact label name from the README."""
+        """A puncher must see that browser-level e2e is intentional future work,
+        not a forgotten gap."""
         readme = (baked / "README.md").read_text()
-        assert "run-e2e" in readme
-
-    def test_readme_ci_section_documents_workflow_dispatch(
-        self, baked: pathlib.Path
-    ) -> None:
-        readme = (baked / "README.md").read_text()
-        assert "workflow_dispatch" in readme
+        ci_start = readme.find("## CI")
+        assert ci_start != -1
+        ci_end = readme.find("\n## ", ci_start + len("## CI"))
+        if ci_end == -1:
+            ci_end = len(readme)
+        ci_section = readme[ci_start:ci_end]
+        assert "rodney" in ci_section.lower()
 
     def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
         assert "```mermaid" in readme
         assert "flowchart" in readme
 
-    def test_readme_mermaid_names_all_make_targets(self, baked: pathlib.Path) -> None:
+    def test_readme_mermaid_names_verify_make_targets(
+        self, baked: pathlib.Path
+    ) -> None:
         """Propagation: the flowchart must name every make target the workflow invokes.
         If ci.yml adds or renames a target, the flowchart must track it."""
         readme = (baked / "README.md").read_text()
         start = readme.find("```mermaid")
         end = readme.find("```", start + len("```mermaid"))
         mermaid = readme[start:end]
-        assert "make setup-ci" in mermaid
         assert "make verify" in mermaid
         assert "make test-unit" in mermaid
-        assert "make test-e2e" in mermaid
+        # run-e2e / make setup-ci / make test-e2e must NOT appear — those
+        # are descoped until v1.2.
+        assert "make setup-ci" not in mermaid
+        assert "make test-e2e" not in mermaid
 
 
 class TestBakeWithoutWorkflow:
@@ -635,20 +587,18 @@ class TestBakeWithoutWorkflow:
 def test_baked_artifact_bench_verify_job_runs_green(
     tmp_path: pathlib.Path,
 ) -> None:
-    """Smoke test: replays the fast ci.yml verify job locally.
+    """Smoke test: replays the ci.yml verify job locally.
 
     A fresh bake with the example artifact must pass
     ``npm install`` + ``make verify`` + ``make test-unit``. This
-    matches what ci.yml's verify job runs on every PR — if it
-    greens here, the PR-time gate will green in CI.
+    matches exactly what ci.yml runs on every PR — if it greens
+    here, the PR-time gate will green in CI.
 
-    The smoke test covers the static layers (structure, types,
-    html-validate) and the jsdom unit spec. The e2e layer
-    (Playwright) is not part of the smoke: running playwright
-    locally needs browser infrastructure that varies across dev
-    environments, and e2e regressions are caught by ci.yml's gated
-    e2e job against real GitHub runners. This matches the fast/
-    gated split the workflow already expresses.
+    Covers four of the five layered verifications: structure, types
+    (tsc ``--checkJs``), html-validate, and jsdom unit specs.
+    Browser-level e2e (the fifth layer) is descoped from v1.1 along
+    with Playwright; the v1.2 rodney-based replacement will add a
+    separate smoke test for that path.
     """
     cookiecutter(
         template=TEMPLATE_DIRECTORY,

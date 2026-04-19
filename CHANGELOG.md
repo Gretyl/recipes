@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript, layered verification harness, optional example artifact).
-- `include_github_workflows` cookiecutter flag across all three cookbook templates. When `yes`, bakes a `.github/workflows/ci.yml` and a `make setup-ci` Makefile target. For `python-project` and `repo-cli`, `ci.yml` runs `make setup-ci && make test` (with `setup-ci` doing `uv sync --frozen`); `repo-cli` continues to gate the existing `update-readme.yml` alongside the new `ci.yml`. For `artifact-bench`, `ci.yml` has two jobs — a fast `verify` (`npm ci` + `make verify` + `make test-unit`, no browser binaries) and a gated `e2e` (`make setup-ci` + `make test-e2e`) triggered by push to `main`, pull requests labeled `run-e2e`, or `workflow_dispatch`. Baked projects include a `## CI` README section with a Mermaid flowchart documenting the trigger-to-step path.
+- `include_github_workflows` cookiecutter flag across all three cookbook templates. When `yes`, bakes a `.github/workflows/ci.yml`. For `python-project` and `repo-cli`, `ci.yml` runs `make setup-ci && make test` (with `setup-ci` doing `uv sync --frozen`); `repo-cli` continues to gate the existing `update-readme.yml` alongside the new `ci.yml`. For `artifact-bench`, `ci.yml` runs `npm ci` + `make verify` (structure + tsc `--checkJs` + html-validate) + `make test-unit` (vitest/jsdom). Baked projects include a `## CI` README section with a Mermaid flowchart documenting the trigger-to-step path.
 - `status` and `dashboard` CLI subcommands using Rich and Textual.  #23
 - Claude Code GitHub Actions workflow.  #27
 

@@ -14,7 +14,7 @@ src/<artifact-slug>/
 ├── README.md           # what it is, current status
 ├── PROMPTS.md          # seed prompt + iteration log
 ├── notes.md            # design decisions (optional)
-└── tests/              # unit.spec.ts, e2e.spec.ts (optional)
+└── tests/              # unit.spec.ts (optional)
 ```
 
 `public/` mirrors the deploy URLs exactly: `src/foo/artifact.html`
@@ -24,9 +24,9 @@ becomes `public/foo.html`, served from
 ## Quickstart
 
 ```bash
-make install   # npm ci + playwright install
+make install   # npm install
 make verify    # static checks (structure, types, html)
-make test      # runtime checks (unit + e2e)
+make test      # runtime checks (unit)
 make build     # src/*/artifact.html -> public/
 make ci        # verify && test && build
 ```
@@ -44,34 +44,33 @@ that's missing the README or PROMPTS file.
 ## Verifying changes
 
 See [docs/verification.md](docs/verification.md). Two layers: fast
-static checks via `make verify`, runtime browser/jsdom checks via
+static checks via `make verify`, runtime jsdom checks via
 `make test`. Add tests opt-in, the first time you catch a regression
 you wish you'd caught automatically.
 {% if cookiecutter.include_github_workflows == "yes" %}
 ## CI
 
-The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` with two jobs:
+The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` that runs the fast verify gate on every pull request and on push to `main`:
 
-- **`verify`** (fast, PR-time): runs `npm ci`, `make verify`, and `make test-unit`. No browser binaries — completes in under a minute. Runs on every pull request and on push to `main`.
-- **`e2e`** (browser, gated): runs `make setup-ci` (`npm ci` + Playwright browser download, ~300MB) and `make test-e2e`. Runs on push to `main`, on pull requests labeled `run-e2e`, or on manual `workflow_dispatch`. Keeping e2e off the PR path by default is deliberate — label an individual PR when you need browser-level confidence.
+1. `npm ci`
+2. `make verify` — structure + types (tsc `--checkJs`) + html-validate
+3. `make test-unit` — vitest/jsdom unit specs
 
-To run both layers locally:
+No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement; see `cookbook/notes/artifact-bench.md` "Deferred work" for status.
+
+To run the same gate locally:
 
 ```bash
-make setup-ci && make ci
+npm install && make verify && make test-unit
 ```
 
 ```mermaid
-flowchart TB
-    A[PR push] --> B[verify job]
-    C[push to main] --> B
-    C --> D[e2e job]
-    E[PR labeled run-e2e] --> D
-    F[workflow_dispatch] --> D
-    B --> B1[npm ci]
-    B1 --> B2[make verify]
-    B2 --> B3[make test-unit]
-    D --> D1[make setup-ci]
-    D1 --> D2[make test-e2e]
+flowchart LR
+    A[PR or push to main] --> B[npm ci]
+    B --> C[make verify]
+    C --> D[make test-unit]
+    D --> E{Pass?}
+    E -->|Yes| F[Green]
+    E -->|No| G[Red]
 ```
 {% endif %}
