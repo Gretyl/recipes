@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-19
+
+### Fixed
+
+- `uv.lock` now matches `pyproject.toml` for the v1.1.x release. v1.1.0's release commit bumped `pyproject.toml` to 1.1.0 but shipped an unchanged lockfile from v1.0.0, so `uv sync --frozen` failed against the tagged state. The git server refused to reassign the v1.1.0 tag, so this patch release is the published fix — consumers should prefer v1.1.1 over v1.1.0.
+
 ## [1.1.0] - 2026-04-19
 
 ### Added
