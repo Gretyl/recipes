@@ -1,8 +1,8 @@
 # repo-cli template demo
 
-*2026-02-13T21:14:44Z*
+*2026-04-19T16:05:00Z*
 
-The repo-cli template scaffolds a Click-based CLI project targeting a specific repository. The baked package uses a `_cli` suffix by convention (`<target_repo>_cli`) so it never collides with the host repo's library package. Version 0.9 adds a Cog-based README template management system (`template.py` with `apply`/`prepare` subcommands), an optional GitHub Actions workflow, and a post-generation hook.
+The repo-cli template scaffolds a Click-based CLI project targeting a specific repository. The baked package uses a `_cli` suffix by convention (`<target_repo>_cli`) so it never collides with the host repo's library package. v1.1 renames the `include_github_workflow` flag to `include_github_workflows` (plural) and extends it to gate a new `.github/workflows/ci.yml` alongside the existing `update-readme.yml` — the rename reflects that the flag now ships multiple workflow files.
 
 ```bash
 rm -rf /tmp/repo-cli-demo && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/repo-cli --no-input --output-dir /tmp/repo-cli-demo && find /tmp/repo-cli-demo/my-repo-cli -type f | sort | sed 's|/tmp/repo-cli-demo/||'
@@ -11,24 +11,74 @@ rm -rf /tmp/repo-cli-demo && /home/user/recipes/.venv/bin/cookiecutter /home/use
 ```output
 my-repo-cli/.envrc
 my-repo-cli/.gitattributes
+my-repo-cli/.github/workflows/ci.yml
 my-repo-cli/.github/workflows/update-readme.yml
 my-repo-cli/.gitignore
 my-repo-cli/CHANGELOG.md
-my-repo-cli/CLI.md
 my-repo-cli/Makefile
 my-repo-cli/README.md
+my-repo-cli/my_repo_cli/AGENTS.md
 my-repo-cli/my_repo_cli/tui/__init__.py
 my-repo-cli/my_repo_cli/tui/cli.py
+my-repo-cli/my_repo_cli/tui/dashboard.py
+my-repo-cli/my_repo_cli/tui/status.py
 my-repo-cli/my_repo_cli/tui/template.py
 my-repo-cli/pyproject.toml
 my-repo-cli/requirements.txt
 my-repo-cli/tests/test_cli.py
+my-repo-cli/tests/test_dashboard.py
+my-repo-cli/tests/test_status.py
 my-repo-cli/tests/test_template.py
 my-repo-cli/tests/test_template_apply.py
 my-repo-cli/tests/test_template_prepare.py
 ```
 
-Note the new files: `template.py` (Cog-based README management), `update-readme.yml` (GitHub Actions workflow), `requirements.txt` (cogapp for CI), and three template test files. The `_cli` suffix (`my_repo_cli/`) is derived automatically from `target_repo` via Jinja2 `replace('-', '_')` filter.
+Notable files: `template.py` (Cog-based README management), both workflow files under `.github/workflows/` (`ci.yml` runs the test gate, `update-readme.yml` regenerates README content via cogapp), `requirements.txt` (cogapp for CI), and the template/status/dashboard test trio. The `_cli` suffix (`my_repo_cli/`) is derived automatically from `target_repo` via Jinja2 `replace('-', '_')` filter.
+
+The new `ci.yml` runs `make setup-ci && make test` on every pull request and on push to main:
+
+```bash
+cat /tmp/repo-cli-demo/my-repo-cli/.github/workflows/ci.yml
+```
+
+```output
+# CI workflow for my-repo-cli.
+#
+# Runs the full `make test` gate on every pull request and on push to
+# main. This is the test-gate workflow; update-readme.yml is a
+# separate workflow that regenerates README content via cogapp on
+# push to main. See README.md's "CI" section for the trigger-to-step
+# flow covering both workflows.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install CI-locked dependencies
+        run: make setup-ci
+
+      - name: Run test gate
+        run: make test
+```
 
 The CLI entry point is registered as `my-repo`. Invoke it with no arguments to see help:
 
@@ -83,6 +133,31 @@ uv sync && direnv allow
 make test
 ```
 
+## CI
+
+Two GitHub Actions workflows ship with this project:
+
+- `.github/workflows/ci.yml` runs the `make test` gate on every pull request and on push to `main`.
+- `.github/workflows/update-readme.yml` regenerates README content via `cog -r` on push to `main`, then commits the update if anything changed.
+
+To run the CI test gate locally:
+
+```bash
+make setup-ci && make test
+```
+
+`make setup-ci` uses `uv sync --frozen` — the CI-specific analog of `uv sync` in `Setup`, which enforces lockfile fidelity and catches drift that would otherwise surface only in CI.
+
+```mermaid
+flowchart TB
+    A[push to main] --> B[update-readme.yml]
+    B --> B1[cog -r README.md]
+    B1 --> B2[commit if changed]
+    C[PR or push to main] --> D[ci.yml]
+    D --> D1[make setup-ci]
+    D1 --> D2[make test]
+```
+
 ## Release
 
 ```bash
@@ -108,6 +183,31 @@ uv sync && direnv allow
 
 ```bash
 make test
+```
+
+## CI
+
+Two GitHub Actions workflows ship with this project:
+
+- `.github/workflows/ci.yml` runs the `make test` gate on every pull request and on push to `main`.
+- `.github/workflows/update-readme.yml` regenerates README content via `cog -r` on push to `main`, then commits the update if anything changed.
+
+To run the CI test gate locally:
+
+```bash
+make setup-ci && make test
+```
+
+`make setup-ci` uses `uv sync --frozen` — the CI-specific analog of `uv sync` in `Setup`, which enforces lockfile fidelity and catches drift that would otherwise surface only in CI.
+
+```mermaid
+flowchart TB
+    A[push to main] --> B[update-readme.yml]
+    B --> B1[cog -r README.md]
+    B1 --> B2[commit if changed]
+    C[PR or push to main] --> D[ci.yml]
+    D --> D1[make setup-ci]
+    D1 --> D2[make test]
 ```
 
 ## Release
@@ -137,6 +237,31 @@ uv sync && direnv allow
 
 ```bash
 make test
+```
+
+## CI
+
+Two GitHub Actions workflows ship with this project:
+
+- `.github/workflows/ci.yml` runs the `make test` gate on every pull request and on push to `main`.
+- `.github/workflows/update-readme.yml` regenerates README content via `cog -r` on push to `main`, then commits the update if anything changed.
+
+To run the CI test gate locally:
+
+```bash
+make setup-ci && make test
+```
+
+`make setup-ci` uses `uv sync --frozen` — the CI-specific analog of `uv sync` in `Setup`, which enforces lockfile fidelity and catches drift that would otherwise surface only in CI.
+
+```mermaid
+flowchart TB
+    A[push to main] --> B[update-readme.yml]
+    B --> B1[cog -r README.md]
+    B1 --> B2[commit if changed]
+    C[PR or push to main] --> D[ci.yml]
+    D --> D1[make setup-ci]
+    D1 --> D2[make test]
 ```
 
 ## Release
