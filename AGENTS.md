@@ -57,7 +57,11 @@ Before writing the first test, draft the complete behavioral contract the change
 - **Inverse-branch properties** — both sides of every conditional (hook enabled/disabled, flag on/off) are exercised.
 - **Sweep invariants** — "no default values leak", "no un-rendered template tokens", "no TODOs left in shipped output".
 
-Tests for all four categories land as red commits in the main sequence. Writing the sweep or propagation tests *after* the implementation already satisfies them turns TDD into retrofitting — the test pins a property, but there was never a red state to drive the design. If a test lands green-on-arrival, either (a) split an earlier commit so the red state exists, or (b) acknowledge the miss explicitly in the commit body (e.g., "green-on-arrival; pins invariant, not transition") so the history stays honest.
+Tests for all four categories land as red commits in the main sequence. Writing the sweep or propagation tests *after* the implementation already satisfies them turns TDD into retrofitting — the test pins a property, but there was never a red state to drive the design.
+
+**Behavior-specific, propagation, and inverse-branch tests must land red.** If one of these lands green-on-arrival, split an earlier commit so the red state exists — don't settle for a disclaimer in the commit body. The discipline belongs in the commit graph, not in narration.
+
+**Tree-wide sweep invariants** (e.g., "no default values leak anywhere", "no un-rendered Jinja tokens in the output") are the one exception: they pass only by virtue of every other commit being correct, so there's no single earlier commit where they have a natural red state without artificially breaking something. These may land green-on-arrival, but the commit body must name which earlier commits the sweep guards, so the regression-guard role is explicit.
 
 ### Behavior-naming over module-naming
 
