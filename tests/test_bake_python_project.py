@@ -369,10 +369,10 @@ class TestBakeWithWorkflow:
     def test_ci_workflow_file_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".github" / "workflows" / "ci.yml").is_file()
 
-    def test_ci_workflow_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
-        """Propagation: --frozen is the CI-specific flag that catches lockfile drift."""
+    def test_ci_workflow_invokes_make_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: ci.yml routes install through make setup-ci so setup logic lives in one place."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
-        assert "uv sync --frozen" in yml
+        assert "make setup-ci" in yml
 
     def test_ci_workflow_invokes_make_test(self, baked: pathlib.Path) -> None:
         """Propagation: renaming the Makefile test target would break CI."""
@@ -383,9 +383,7 @@ class TestBakeWithWorkflow:
         makefile = (baked / "Makefile").read_text()
         assert "setup-ci:" in makefile
 
-    def test_makefile_setup_ci_runs_uv_sync_frozen(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_makefile_setup_ci_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
         """The CI-specific bit of setup-ci: --frozen enforces lockfile fidelity."""
         makefile = (baked / "Makefile").read_text()
         lines = makefile.splitlines()
@@ -422,23 +420,17 @@ class TestBakeWithWorkflow:
         readme = (baked / "README.md").read_text()
         assert ".github/workflows/ci.yml" in readme
 
-    def test_readme_ci_section_names_setup_ci_target(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_names_setup_ci_target(self, baked: pathlib.Path) -> None:
         """Propagation: README must name the local equivalent command."""
         readme = (baked / "README.md").read_text()
         assert "make setup-ci" in readme
 
-    def test_readme_ci_section_has_mermaid_flowchart(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
         assert "```mermaid" in readme
         assert "flowchart" in readme
 
-    def test_readme_mermaid_names_setup_ci_and_test(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_mermaid_names_setup_ci_and_test(self, baked: pathlib.Path) -> None:
         """Propagation: if Makefile targets rename, the flowchart must too."""
         readme = (baked / "README.md").read_text()
         start = readme.find("```mermaid")

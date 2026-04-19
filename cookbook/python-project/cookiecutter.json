@@ -1,5 +1,6 @@
 {
   "project_name": "Fresh Project",
   "project_slug": "fresh-project",
-  "package_name": "fresh_project"
+  "package_name": "fresh_project",
+  "include_github_workflows": ["yes", "no"]
 }
