@@ -350,3 +350,122 @@ class TestBakeCustomContext:
                 assert "Fresh Project" not in text, (
                     f"{p.relative_to(baked)} contains default value 'Fresh Project'"
                 )
+
+
+class TestBakeWithWorkflow:
+    """Tests specific to include_github_workflows='yes' in python-project."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("workflow")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"include_github_workflows": "yes"},
+        )
+        return tmp_path / "fresh-project"
+
+    def test_ci_workflow_file_exists(self, baked: pathlib.Path) -> None:
+        assert (baked / ".github" / "workflows" / "ci.yml").is_file()
+
+    def test_ci_workflow_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
+        """Propagation: --frozen is the CI-specific flag that catches lockfile drift."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "uv sync --frozen" in yml
+
+    def test_ci_workflow_invokes_make_test(self, baked: pathlib.Path) -> None:
+        """Propagation: renaming the Makefile test target would break CI."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make test" in yml
+
+    def test_makefile_defines_setup_ci_target(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        assert "setup-ci:" in makefile
+
+    def test_makefile_setup_ci_runs_uv_sync_frozen(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The CI-specific bit of setup-ci: --frozen enforces lockfile fidelity."""
+        makefile = (baked / "Makefile").read_text()
+        lines = makefile.splitlines()
+        setup_ci_idx = next(
+            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
+        )
+        # Scan the recipe lines until the next target or blank line
+        recipe = []
+        for line in lines[setup_ci_idx + 1 :]:
+            if line and not line.startswith(("\t", " ")):
+                break
+            recipe.append(line)
+        recipe_text = "\n".join(recipe)
+        assert "uv sync --frozen" in recipe_text
+
+    def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        phony_line = next(
+            line for line in makefile.splitlines() if line.startswith(".PHONY:")
+        )
+        assert "setup-ci" in phony_line
+
+    def test_makefile_help_lists_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: make help must advertise the new target alongside existing ones."""
+        makefile = (baked / "Makefile").read_text()
+        assert '"setup-ci"' in makefile
+
+    def test_readme_has_ci_section(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "## CI" in readme
+
+    def test_readme_ci_section_names_workflow_file(self, baked: pathlib.Path) -> None:
+        """Propagation: README must name the file so a puncher can find it."""
+        readme = (baked / "README.md").read_text()
+        assert ".github/workflows/ci.yml" in readme
+
+    def test_readme_ci_section_names_setup_ci_target(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: README must name the local equivalent command."""
+        readme = (baked / "README.md").read_text()
+        assert "make setup-ci" in readme
+
+    def test_readme_ci_section_has_mermaid_flowchart(
+        self, baked: pathlib.Path
+    ) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "```mermaid" in readme
+        assert "flowchart" in readme
+
+    def test_readme_mermaid_names_setup_ci_and_test(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: if Makefile targets rename, the flowchart must too."""
+        readme = (baked / "README.md").read_text()
+        start = readme.find("```mermaid")
+        end = readme.find("```", start + len("```mermaid"))
+        mermaid = readme[start:end]
+        assert "make setup-ci" in mermaid
+        assert "make test" in mermaid
+
+
+class TestBakeWithoutWorkflow:
+    """Tests specific to include_github_workflows='no' in python-project."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("no-workflow")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"include_github_workflows": "no"},
+        )
+        return tmp_path / "fresh-project"
+
+    def test_no_github_directory(self, baked: pathlib.Path) -> None:
+        assert not (baked / ".github").exists()
+
+    def test_readme_has_no_ci_section(self, baked: pathlib.Path) -> None:
+        """When the flag is no, the CI section must not leak into the README."""
+        readme = (baked / "README.md").read_text()
+        assert "## CI" not in readme
