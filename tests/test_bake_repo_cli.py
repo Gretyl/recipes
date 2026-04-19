@@ -231,9 +231,7 @@ class TestBakeWithWorkflow:
         makefile = (baked / "Makefile").read_text()
         assert "setup-ci:" in makefile
 
-    def test_makefile_setup_ci_runs_uv_sync_frozen(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_makefile_setup_ci_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
         """setup-ci uses --frozen to enforce lockfile fidelity in CI."""
         makefile = (baked / "Makefile").read_text()
         lines = makefile.splitlines()
@@ -264,23 +262,17 @@ class TestBakeWithWorkflow:
         readme = (baked / "README.md").read_text()
         assert "## CI" in readme
 
-    def test_readme_ci_section_names_both_workflows(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_names_both_workflows(self, baked: pathlib.Path) -> None:
         """Propagation: README must name both workflow files the flag ships."""
         readme = (baked / "README.md").read_text()
         assert "update-readme.yml" in readme
         assert "ci.yml" in readme
 
-    def test_readme_ci_section_names_setup_ci_target(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_names_setup_ci_target(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
         assert "make setup-ci" in readme
 
-    def test_readme_ci_section_has_mermaid_flowchart(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
         assert "```mermaid" in readme
         assert "flowchart" in readme

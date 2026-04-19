@@ -1,0 +1,36 @@
+# CI workflow for {{cookiecutter.project_slug}}.
+#
+# Runs the full `make test` gate on every pull request and on push to
+# main. This is the test-gate workflow; update-readme.yml is a
+# separate workflow that regenerates README content via cogapp on
+# push to main. See README.md's "CI" section for the trigger-to-step
+# flow covering both workflows.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install CI-locked dependencies
+        run: make setup-ci
+
+      - name: Run test gate
+        run: make test
