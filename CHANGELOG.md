@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-04-19
+
 ### Added
 
 - Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript; layered verification harness covering structure, tsc `--checkJs`, html-validate, and vitest/jsdom unit tests; optional example artifact). Browser-level e2e is planned for v1.2 via a lightweight rodney-based replacement — see `cookbook/notes/artifact-bench.md` "Deferred work".
