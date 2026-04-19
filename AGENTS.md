@@ -44,7 +44,7 @@ Available subcommands:
 
 When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: implement with Pydantic models, then verify with `make test` and `make mypy`.
 
-## Release workflow
+## Distribution
 
 Cutting a release is a sequence that has to stay atomic: the commit tagged `vX.Y.Z` must contain a `pyproject.toml` version of `X.Y.Z`, a `CHANGELOG.md` whose top dated section is `[X.Y.Z]`, **and** a `uv.lock` regenerated against that `pyproject.toml`. If any of these drift, `make dist` fails — or, worse, ships a tag whose `uv sync --frozen` doesn't reproduce.
 
