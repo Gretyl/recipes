@@ -213,6 +213,92 @@ class TestBakeWithWorkflow:
         assert ".github/workflows" in tree
         assert ".github/workflows/update-readme.yml" in tree
 
+    def test_ci_workflow_exists(self, baked: pathlib.Path) -> None:
+        """ci.yml ships alongside update-readme.yml when the flag is 'yes'."""
+        assert (baked / ".github" / "workflows" / "ci.yml").is_file()
+
+    def test_ci_workflow_invokes_make_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: ci.yml routes install through make setup-ci."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make setup-ci" in yml
+
+    def test_ci_workflow_invokes_make_test(self, baked: pathlib.Path) -> None:
+        """Propagation: renaming the Makefile test target would break CI."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make test" in yml
+
+    def test_makefile_defines_setup_ci_target(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        assert "setup-ci:" in makefile
+
+    def test_makefile_setup_ci_runs_uv_sync_frozen(
+        self, baked: pathlib.Path
+    ) -> None:
+        """setup-ci uses --frozen to enforce lockfile fidelity in CI."""
+        makefile = (baked / "Makefile").read_text()
+        lines = makefile.splitlines()
+        setup_ci_idx = next(
+            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
+        )
+        recipe = []
+        for line in lines[setup_ci_idx + 1 :]:
+            if line and not line.startswith(("\t", " ")):
+                break
+            recipe.append(line)
+        recipe_text = "\n".join(recipe)
+        assert "uv sync --frozen" in recipe_text
+
+    def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        phony_line = next(
+            line for line in makefile.splitlines() if line.startswith(".PHONY:")
+        )
+        assert "setup-ci" in phony_line
+
+    def test_makefile_help_lists_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: make help must advertise the new target."""
+        makefile = (baked / "Makefile").read_text()
+        assert '"setup-ci"' in makefile
+
+    def test_readme_has_ci_section(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "## CI" in readme
+
+    def test_readme_ci_section_names_both_workflows(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: README must name both workflow files the flag ships."""
+        readme = (baked / "README.md").read_text()
+        assert "update-readme.yml" in readme
+        assert "ci.yml" in readme
+
+    def test_readme_ci_section_names_setup_ci_target(
+        self, baked: pathlib.Path
+    ) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "make setup-ci" in readme
+
+    def test_readme_ci_section_has_mermaid_flowchart(
+        self, baked: pathlib.Path
+    ) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "```mermaid" in readme
+        assert "flowchart" in readme
+
+    def test_readme_mermaid_names_setup_ci_test_and_cog(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: the two-branch flowchart must name cog (update-readme path)
+        and make setup-ci / make test (ci path). Renames in either workflow
+        surface as a red test."""
+        readme = (baked / "README.md").read_text()
+        start = readme.find("```mermaid")
+        end = readme.find("```", start + len("```mermaid"))
+        mermaid = readme[start:end]
+        assert "make setup-ci" in mermaid
+        assert "make test" in mermaid
+        assert "cog" in mermaid
+
 
 # ---------------------------------------------------------------------------
 # No-workflow-only tests
@@ -228,3 +314,8 @@ class TestBakeWithoutWorkflow:
 
     def test_no_github_directory(self, baked: pathlib.Path) -> None:
         assert not (baked / ".github").exists()
+
+    def test_readme_has_no_ci_section(self, baked: pathlib.Path) -> None:
+        """When the flag is no, the CI section must not leak into the README."""
+        readme = (baked / "README.md").read_text()
+        assert "## CI" not in readme
