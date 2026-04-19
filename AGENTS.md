@@ -44,6 +44,21 @@ Available subcommands:
 
 When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: implement with Pydantic models, then verify with `make test` and `make mypy`.
 
+## Release workflow
+
+Cutting a release is a sequence that has to stay atomic: the commit tagged `vX.Y.Z` must contain a `pyproject.toml` version of `X.Y.Z`, a `CHANGELOG.md` whose top dated section is `[X.Y.Z]`, **and** a `uv.lock` regenerated against that `pyproject.toml`. If any of these drift, `make dist` fails — or, worse, ships a tag whose `uv sync --frozen` doesn't reproduce.
+
+Order of operations:
+
+1. Edit `pyproject.toml` (bump version) and `CHANGELOG.md` (rename `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, open a new empty `[Unreleased]`).
+2. Run `uv sync` — this regenerates `uv.lock` against the new `pyproject.toml` version. **Do this before committing**, not after; `make test` triggers `uv sync` implicitly, so running it post-commit strands lockfile changes outside the release commit.
+3. Stage `pyproject.toml`, `CHANGELOG.md`, and `uv.lock` together. Commit as `chore(release): prepare vX.Y.Z`.
+4. Tag the commit: `git tag vX.Y.Z`.
+5. Run `make dist`. It verifies the tag points at HEAD, the version/tag/CHANGELOG match, and the tree is clean. A clean pass emits `dist/recipes-X.Y.Z.tar.gz` and `.whl`.
+6. Push branch **and** tag: `git push origin <branch> && git push origin vX.Y.Z`.
+
+Published tags are immutable on the git server (tag delete and tag force-push are both rejected). If a release commit lands with drift, the recovery path is a new patch version — not a retagged `X.Y.Z`. The commit body should name which earlier tag the patch is recovering.
+
 ## TDD Discipline
 
 Implementation work proceeds as red→green pairs: a `test(...)` commit pinning a behavior with a failing assertion, then a `feat(...)` / `fix(...)` commit that flips it green. `make test` is run between each commit so the transition is observable in the log.
