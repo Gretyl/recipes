@@ -235,6 +235,16 @@ class TestBakeDefaults:
         """public/ is gitignored except for .gitkeep — preserves the deploy-target directory."""
         assert (baked / "public" / ".gitkeep").is_file()
 
+    def test_default_bake_ships_changelog_with_unreleased_section(
+        self, baked: pathlib.Path
+    ) -> None:
+        """A web-artifact workbench iterates on designs over time; CHANGELOG.md is where each deploy/iteration gets recorded."""
+        changelog = baked / "CHANGELOG.md"
+        assert changelog.is_file()
+        text = changelog.read_text()
+        assert "Keep a Changelog" in text
+        assert "[Unreleased]" in text
+
 
 class TestBakeWithExample:
     """Bake with include_example_artifact=yes — the worked example must survive."""
