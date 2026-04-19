@@ -146,10 +146,10 @@ make dist
 ```
 ````
 
-The GitHub Actions workflow (`update-readme.yml`) automates this: on push to main, it runs `prepare`, `apply`, and `cog -r` to regenerate README content. The workflow is conditional — baking with `include_github_workflow=no` removes the `.github/` directory via the post-generation hook:
+The GitHub Actions workflow (`update-readme.yml`) automates this: on push to main, it runs `prepare`, `apply`, and `cog -r` to regenerate README content. The workflow is conditional — baking with `include_github_workflows=no` removes the `.github/` directory via the post-generation hook:
 
 ```bash
-rm -rf /tmp/repo-cli-no-wf && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/repo-cli --no-input --output-dir /tmp/repo-cli-no-wf include_github_workflow=no 2>&1; test -d /tmp/repo-cli-no-wf/my-repo-cli/.github && echo '.github/ exists' || echo 'No .github/ directory — removed by post-gen hook'
+rm -rf /tmp/repo-cli-no-wf && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/repo-cli --no-input --output-dir /tmp/repo-cli-no-wf include_github_workflows=no 2>&1; test -d /tmp/repo-cli-no-wf/my-repo-cli/.github && echo '.github/ exists' || echo 'No .github/ directory — removed by post-gen hook'
 ```
 
 ```output

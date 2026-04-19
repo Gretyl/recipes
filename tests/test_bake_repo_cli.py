@@ -1,7 +1,7 @@
 """Bake-level tests for the repo-cli cookiecutter template.
 
 These tests programmatically run cookiecutter against the template
-with both values of ``include_github_workflow`` and verify the
+with both values of ``include_github_workflows`` and verify the
 resulting file trees and file contents.
 """
 
@@ -24,7 +24,7 @@ def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
         extra_context={
             "project_name": "Demo Repo CLI",
             "target_repo": "demo-repo",
-            "include_github_workflow": workflow,
+            "include_github_workflows": workflow,
         },
     )
     return tmp_path / "demo-repo-cli"
@@ -168,7 +168,7 @@ def test_shared_file_tree(baked: pathlib.Path) -> None:
 
 
 class TestBakeWithWorkflow:
-    """Tests specific to include_github_workflow='yes'."""
+    """Tests specific to include_github_workflows='yes'."""
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
@@ -220,7 +220,7 @@ class TestBakeWithWorkflow:
 
 
 class TestBakeWithoutWorkflow:
-    """Tests specific to include_github_workflow='no'."""
+    """Tests specific to include_github_workflows='no'."""
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
