@@ -1,5 +1,5 @@
 # {{cookiecutter.project_slug}}/Makefile
-.PHONY: help install verify verify-structure verify-types verify-html \
+.PHONY: help install setup-ci verify verify-structure verify-types verify-html \
         test test-unit test-e2e build ci clean
 .DEFAULT_GOAL := help
 
@@ -12,7 +12,8 @@ SCOPE    := $(if $(ARTIFACT),src/$(ARTIFACT),src)
 
 help:
 	@echo "Targets:"
-	@echo "  install      npm deps + playwright browsers"
+	@echo "  install      npm deps + playwright browsers (local dev)"
+	@echo "  setup-ci     npm deps + playwright browsers (CI-explicit name)"
 	@echo "  verify       static checks   (structure, types, html)"
 	@echo "  test         runtime checks  (unit + e2e)"
 	@echo "  build        src/*/artifact.html -> public/"
@@ -22,6 +23,10 @@ help:
 	@echo "Scope to one: make <target> ARTIFACT=implode"
 
 install:
+	npm ci
+	npx playwright install --with-deps
+
+setup-ci:
 	npm ci
 	npx playwright install --with-deps
 

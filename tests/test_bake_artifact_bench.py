@@ -461,9 +461,7 @@ class TestBakeWithWorkflow:
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "workflow_dispatch:" in yml
 
-    def test_ci_workflow_filters_on_run_e2e_label(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_ci_workflow_filters_on_run_e2e_label(self, baked: pathlib.Path) -> None:
         """Propagation: the label name must match what reviewers add to PRs."""
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "run-e2e" in yml
@@ -477,9 +475,7 @@ class TestBakeWithWorkflow:
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "make verify" in yml
 
-    def test_ci_verify_job_invokes_make_test_unit(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_ci_verify_job_invokes_make_test_unit(self, baked: pathlib.Path) -> None:
         yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
         assert "make test-unit" in yml
 
@@ -528,7 +524,9 @@ class TestBakeWithWorkflow:
         """Propagation: make help must advertise the new target."""
         makefile = (baked / "Makefile").read_text()
         help_idx = next(
-            i for i, line in enumerate(makefile.splitlines()) if line.startswith("help:")
+            i
+            for i, line in enumerate(makefile.splitlines())
+            if line.startswith("help:")
         )
         help_block = "\n".join(makefile.splitlines()[help_idx : help_idx + 30])
         assert "setup-ci" in help_block
@@ -575,16 +573,12 @@ class TestBakeWithWorkflow:
         readme = (baked / "README.md").read_text()
         assert "workflow_dispatch" in readme
 
-    def test_readme_ci_section_has_mermaid_flowchart(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
         assert "```mermaid" in readme
         assert "flowchart" in readme
 
-    def test_readme_mermaid_names_all_make_targets(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_readme_mermaid_names_all_make_targets(self, baked: pathlib.Path) -> None:
         """Propagation: the flowchart must name every make target the workflow invokes.
         If ci.yml adds or renames a target, the flowchart must track it."""
         readme = (baked / "README.md").read_text()

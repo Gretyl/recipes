@@ -47,3 +47,31 @@ See [docs/verification.md](docs/verification.md). Two layers: fast
 static checks via `make verify`, runtime browser/jsdom checks via
 `make test`. Add tests opt-in, the first time you catch a regression
 you wish you'd caught automatically.
+{% if cookiecutter.include_github_workflows == "yes" %}
+## CI
+
+The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` with two jobs:
+
+- **`verify`** (fast, PR-time): runs `npm ci`, `make verify`, and `make test-unit`. No browser binaries — completes in under a minute. Runs on every pull request and on push to `main`.
+- **`e2e`** (browser, gated): runs `make setup-ci` (`npm ci` + Playwright browser download, ~300MB) and `make test-e2e`. Runs on push to `main`, on pull requests labeled `run-e2e`, or on manual `workflow_dispatch`. Keeping e2e off the PR path by default is deliberate — label an individual PR when you need browser-level confidence.
+
+To run both layers locally:
+
+```bash
+make setup-ci && make ci
+```
+
+```mermaid
+flowchart TB
+    A[PR push] --> B[verify job]
+    C[push to main] --> B
+    C --> D[e2e job]
+    E[PR labeled run-e2e] --> D
+    F[workflow_dispatch] --> D
+    B --> B1[npm ci]
+    B1 --> B2[make verify]
+    B2 --> B3[make test-unit]
+    D --> D1[make setup-ci]
+    D1 --> D2[make test-e2e]
+```
+{% endif %}
