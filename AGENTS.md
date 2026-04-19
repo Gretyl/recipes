@@ -42,11 +42,30 @@ Available subcommands:
 
 `uv run recipes meld makefiles` supports four output formats via `--output` / `-o`: `analysis` (default human-readable summary), `prompt` (structured prompt for Claude), `diff` (unified diff), and `json` (machine-readable).
 
-When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: write a failing test first, implement with Pydantic models, then verify with `make test` and `make mypy`.
+When adding a new CLI subcommand, follow the process in `recipes_cli/AGENTS.md`: implement with Pydantic models, then verify with `make test` and `make mypy`.
+
+## TDD Discipline
+
+Implementation work proceeds as red→green pairs: a `test(...)` commit pinning a behavior with a failing assertion, then a `feat(...)` / `fix(...)` commit that flips it green. `make test` is run between each commit so the transition is observable in the log.
+
+### Enumerate the full property list before commit #1
+
+Before writing the first test, draft the complete behavioral contract the change must satisfy. That list has to include:
+
+- **Behavior-specific properties** — what the new code does.
+- **Propagation properties** — every input variable (cookiecutter vars, CLI flags, config keys) reaches every site that depends on it.
+- **Inverse-branch properties** — both sides of every conditional (hook enabled/disabled, flag on/off) are exercised.
+- **Sweep invariants** — "no default values leak", "no un-rendered template tokens", "no TODOs left in shipped output".
+
+Tests for all four categories land as red commits in the main sequence. Writing the sweep or propagation tests *after* the implementation already satisfies them turns TDD into retrofitting — the test pins a property, but there was never a red state to drive the design. If a test lands green-on-arrival, either (a) split an earlier commit so the red state exists, or (b) acknowledge the miss explicitly in the commit body (e.g., "green-on-arrival; pins invariant, not transition") so the history stays honest.
+
+### Behavior-naming over module-naming
+
+`test(...)` commit subjects name the behavior under design, not the file being touched. Right: `test(template): default bake seeds src/.gitkeep and omits src/hello-artifact`. Wrong: `test(template): add bake tests for artifact-bench`.
 
 ## Commit Conventions
 
-Prefer atomic commits — each commit should contain a single logical change (one feature, one fix, one refactor). Separating concerns into distinct commits makes review easier and keeps `git bisect` useful. It's fine to commit tests and implementation separately when working in a TDD style.
+Prefer atomic commits — each commit should contain a single logical change (one feature, one fix, one refactor). Separating concerns into distinct commits makes review easier and keeps `git bisect` useful. Tests and implementation land as separate commits — see TDD Discipline above.
 
 All commits **must** use [Conventional Commits](https://www.conventionalcommits.org/) for the subject line:
 
