@@ -5,7 +5,7 @@ describe("hello-artifact", () => {
   let mounted: Awaited<ReturnType<typeof loadArtifact>>;
 
   beforeEach(async () => {
-    mounted = await loadArtifact("hello-artifact");
+    mounted = await loadArtifact("src/hello-artifact");
   });
 
   it("starts the counter at zero", () => {

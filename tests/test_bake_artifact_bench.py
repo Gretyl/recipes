@@ -7,6 +7,8 @@ trees and file contents.
 
 import json
 import pathlib
+import shutil
+import subprocess
 
 import pytest
 from cookiecutter.main import cookiecutter
@@ -617,3 +619,74 @@ class TestBakeWithoutWorkflow:
         """Inverse sanity: the hook only removes .github/; the local-dev install stays."""
         makefile = (baked / "Makefile").read_text()
         assert "install:" in makefile
+
+
+# ---------------------------------------------------------------------------
+# End-to-end smoke: bake, install, run `make ci` inside the output.
+# Gated by @pytest.mark.slow so it only runs when explicitly enabled.
+# Guards the combined correctness of Makefile targets, package.json
+# devDeps, and the new CI workflow shape — any regression in those
+# surfaces here as a red slow test.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow()
+@pytest.mark.skipif(shutil.which("npm") is None, reason="npm not installed")
+def test_baked_artifact_bench_verify_job_runs_green(
+    tmp_path: pathlib.Path,
+) -> None:
+    """Smoke test: replays the fast ci.yml verify job locally.
+
+    A fresh bake with the example artifact must pass
+    ``npm install`` + ``make verify`` + ``make test-unit``. This
+    matches what ci.yml's verify job runs on every PR — if it
+    greens here, the PR-time gate will green in CI.
+
+    The smoke test covers the static layers (structure, types,
+    html-validate) and the jsdom unit spec. The e2e layer
+    (Playwright) is not part of the smoke: running playwright
+    locally needs browser infrastructure that varies across dev
+    environments, and e2e regressions are caught by ci.yml's gated
+    e2e job against real GitHub runners. This matches the fast/
+    gated split the workflow already expresses.
+    """
+    cookiecutter(
+        template=TEMPLATE_DIRECTORY,
+        output_dir=str(tmp_path),
+        no_input=True,
+        extra_context={"include_example_artifact": "yes"},
+    )
+    baked = tmp_path / "fresh-artifacts"
+
+    install = subprocess.run(
+        ["npm", "install"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert install.returncode == 0, (
+        f"npm install failed:\n{install.stdout}\n{install.stderr}"
+    )
+
+    verify = subprocess.run(
+        ["make", "verify"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert verify.returncode == 0, (
+        f"make verify failed:\n{verify.stdout}\n{verify.stderr}"
+    )
+
+    test_unit = subprocess.run(
+        ["make", "test-unit"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert test_unit.returncode == 0, (
+        f"make test-unit failed:\n{test_unit.stdout}\n{test_unit.stderr}"
+    )

@@ -58,7 +58,7 @@ test-unit:
 	@echo "-> vitest (jsdom/happy-dom)"
 	npx vitest run $(SCOPE)
 
-test-e2e:
+test-e2e: build
 	@echo "-> playwright"
 	npx playwright test $(if $(ARTIFACT),--grep "$(ARTIFACT)",)
 
