@@ -410,3 +410,216 @@ class TestBakeCustomContext:
             if "cookiecutter." in text and "{{" in text:
                 offenders.append(path.relative_to(baked))
         assert not offenders, f"unrendered cookiecutter tokens remain: {offenders}"
+
+
+class TestBakeWithWorkflow:
+    """Tests specific to include_github_workflows='yes' in artifact-bench."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("workflow")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"include_github_workflows": "yes"},
+        )
+        return tmp_path / "fresh-artifacts"
+
+    # ---- ci.yml shape ----
+
+    def test_ci_workflow_file_exists(self, baked: pathlib.Path) -> None:
+        assert (baked / ".github" / "workflows" / "ci.yml").is_file()
+
+    def test_ci_workflow_defines_verify_job(self, baked: pathlib.Path) -> None:
+        """The fast PR-time job must be named verify so readers map it to make verify."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "verify:" in yml
+
+    def test_ci_workflow_defines_e2e_job(self, baked: pathlib.Path) -> None:
+        """The gated browser job must be named e2e so readers map it to make test-e2e."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "e2e:" in yml
+
+    def test_ci_workflow_triggers_include_pull_request(
+        self, baked: pathlib.Path
+    ) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "pull_request:" in yml
+
+    def test_ci_workflow_triggers_include_push_to_main(
+        self, baked: pathlib.Path
+    ) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "push:" in yml
+        assert "main" in yml
+
+    def test_ci_workflow_triggers_include_workflow_dispatch(
+        self, baked: pathlib.Path
+    ) -> None:
+        """workflow_dispatch is the escape hatch for running e2e against any branch."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "workflow_dispatch:" in yml
+
+    def test_ci_workflow_filters_on_run_e2e_label(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: the label name must match what reviewers add to PRs."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "run-e2e" in yml
+
+    def test_ci_verify_job_invokes_npm_ci(self, baked: pathlib.Path) -> None:
+        """Verify job does npm ci directly (skipping playwright install) to stay fast."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "npm ci" in yml
+
+    def test_ci_verify_job_invokes_make_verify(self, baked: pathlib.Path) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make verify" in yml
+
+    def test_ci_verify_job_invokes_make_test_unit(
+        self, baked: pathlib.Path
+    ) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make test-unit" in yml
+
+    def test_ci_e2e_job_invokes_make_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: e2e routes the heavy install through make setup-ci."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make setup-ci" in yml
+
+    def test_ci_e2e_job_invokes_make_test_e2e(self, baked: pathlib.Path) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make test-e2e" in yml
+
+    # ---- Makefile ----
+
+    def test_makefile_defines_setup_ci_target(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        assert "setup-ci:" in makefile
+
+    def test_makefile_setup_ci_runs_npm_ci_and_playwright(
+        self, baked: pathlib.Path
+    ) -> None:
+        """setup-ci installs npm deps + playwright browsers for the e2e job."""
+        makefile = (baked / "Makefile").read_text()
+        lines = makefile.splitlines()
+        setup_ci_idx = next(
+            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
+        )
+        recipe = []
+        for line in lines[setup_ci_idx + 1 :]:
+            if line and not line.startswith(("\t", " ")):
+                break
+            recipe.append(line)
+        recipe_text = "\n".join(recipe)
+        assert "npm ci" in recipe_text
+        assert "playwright install" in recipe_text
+
+    def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
+        makefile = (baked / "Makefile").read_text()
+        joined = makefile.replace("\\\n", " ")
+        phony_line = next(
+            line for line in joined.splitlines() if line.startswith(".PHONY:")
+        )
+        assert "setup-ci" in phony_line
+
+    def test_makefile_help_lists_setup_ci(self, baked: pathlib.Path) -> None:
+        """Propagation: make help must advertise the new target."""
+        makefile = (baked / "Makefile").read_text()
+        help_idx = next(
+            i for i, line in enumerate(makefile.splitlines()) if line.startswith("help:")
+        )
+        help_block = "\n".join(makefile.splitlines()[help_idx : help_idx + 30])
+        assert "setup-ci" in help_block
+
+    def test_makefile_install_target_untouched(self, baked: pathlib.Path) -> None:
+        """install is the local-dev affordance; setup-ci is the CI equivalent. Both exist side by side."""
+        makefile = (baked / "Makefile").read_text()
+        assert "install:" in makefile
+
+    # ---- README CI section ----
+
+    def test_readme_has_ci_section(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "## CI" in readme
+
+    def test_readme_ci_section_names_workflow_file(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert ".github/workflows/ci.yml" in readme
+
+    def test_readme_ci_section_names_both_jobs(self, baked: pathlib.Path) -> None:
+        """Propagation: renames to the ci.yml job names must update the README.
+        Scoped to the ## CI section so incidental uses of 'verify' / 'e2e'
+        elsewhere don't hide a regression in the CI docs themselves."""
+        readme = (baked / "README.md").read_text()
+        ci_start = readme.find("## CI")
+        assert ci_start != -1, "README has no ## CI section"
+        ci_end = readme.find("\n## ", ci_start + len("## CI"))
+        if ci_end == -1:
+            ci_end = len(readme)
+        ci_section = readme[ci_start:ci_end].lower()
+        assert "verify" in ci_section
+        assert "e2e" in ci_section
+
+    def test_readme_ci_section_documents_run_e2e_label(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: a reviewer must be able to find the exact label name from the README."""
+        readme = (baked / "README.md").read_text()
+        assert "run-e2e" in readme
+
+    def test_readme_ci_section_documents_workflow_dispatch(
+        self, baked: pathlib.Path
+    ) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "workflow_dispatch" in readme
+
+    def test_readme_ci_section_has_mermaid_flowchart(
+        self, baked: pathlib.Path
+    ) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "```mermaid" in readme
+        assert "flowchart" in readme
+
+    def test_readme_mermaid_names_all_make_targets(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: the flowchart must name every make target the workflow invokes.
+        If ci.yml adds or renames a target, the flowchart must track it."""
+        readme = (baked / "README.md").read_text()
+        start = readme.find("```mermaid")
+        end = readme.find("```", start + len("```mermaid"))
+        mermaid = readme[start:end]
+        assert "make setup-ci" in mermaid
+        assert "make verify" in mermaid
+        assert "make test-unit" in mermaid
+        assert "make test-e2e" in mermaid
+
+
+class TestBakeWithoutWorkflow:
+    """Tests specific to include_github_workflows='no' in artifact-bench."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        tmp_path = tmp_path_factory.mktemp("no-workflow")
+        cookiecutter(
+            template=TEMPLATE_DIRECTORY,
+            output_dir=str(tmp_path),
+            no_input=True,
+            extra_context={"include_github_workflows": "no"},
+        )
+        return tmp_path / "fresh-artifacts"
+
+    def test_no_github_directory(self, baked: pathlib.Path) -> None:
+        assert not (baked / ".github").exists()
+
+    def test_readme_has_no_ci_section(self, baked: pathlib.Path) -> None:
+        """When the flag is no, the CI section must not leak into the README."""
+        readme = (baked / "README.md").read_text()
+        assert "## CI" not in readme
+
+    def test_install_target_still_present(self, baked: pathlib.Path) -> None:
+        """Inverse sanity: the hook only removes .github/; the local-dev install stays."""
+        makefile = (baked / "Makefile").read_text()
+        assert "install:" in makefile
