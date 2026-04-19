@@ -14,7 +14,7 @@ collide, new workflow files only land when opted in).
 
 ### artifact-bench
 
-- New cookiecutter flag `include_github_workflow` (yes/no, defaults
+- New cookiecutter flag `include_github_workflows` (yes/no, defaults
   to `yes` — the layered verification harness only earns its keep
   when CI actually runs it).
 - `.github/workflows/ci.yml`:
@@ -28,13 +28,13 @@ collide, new workflow files only land when opted in).
   --with-deps`. Named differently from `make install` to make the
   extra step explicit for CI runners.
 - Post-generation hook: remove `.github/` when
-  `include_github_workflow=no`, matching repo-cli's existing pattern.
+  `include_github_workflows=no`, matching repo-cli's existing pattern.
 - Bake tests: assert the workflow file exists, splits verify from
   e2e, and uses the correct setup-ci target.
 
 ### python-project
 
-- New cookiecutter flag `include_github_workflow` (yes/no, defaults
+- New cookiecutter flag `include_github_workflows` (yes/no, defaults
   to `yes`).
 - `.github/workflows/ci.yml`: `uv sync --frozen`, `make test`. Single
   job, no browsers.
@@ -45,7 +45,8 @@ collide, new workflow files only land when opted in).
 
 ### repo-cli
 
-- Extend existing `include_github_workflow` flag semantics: when
+- Rename the existing `include_github_workflow` flag to
+  `include_github_workflows` (plural) and extend its semantics: when
   `yes`, ship **both** `update-readme.yml` (already there) and the
   new `ci.yml`.
 - `.github/workflows/ci.yml`: `uv sync --frozen`, `make test`.
@@ -89,7 +90,7 @@ Once the CI extensions and demo refreshes above have merged, cut the
 carry, in the order they land on main:
 
 1. **Added** — `artifact-bench` cookbook template (this PR)
-2. **Added** — `include_github_workflow` CI flag across all three
+2. **Added** — `include_github_workflows` CI flag across all three
    templates, with `setup-ci` Makefile targets
 3. **Added** — `status` and `dashboard` CLI subcommands (#23), Claude
    Code GitHub Actions workflow (#27) — backfilled from post-1.0.0
