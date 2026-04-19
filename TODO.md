@@ -96,7 +96,8 @@ carry, in the order they land on main:
    commits
 4. **Changed** — `make test` runs `mypy`, uv integrated into dev
    workflow (#26, #28); `uv run` in templated Makefiles (#21);
-   expanded ruff rulesets (#15)
+   expanded ruff rulesets (#15); TDD discipline codified in
+   `AGENTS.md` with property-enumeration requirement
 5. **Removed** — `hello` CLI subcommand; `claude-code-review`
    workflow
 
