@@ -1,0 +1,10 @@
+# Drives scripts/gallery.ts. One entry per artifact you want listed
+# in public/index.html. The route should mirror the URL the artifact
+# is served from — for {{cookiecutter.project_name}} that's
+# https://{{cookiecutter.deploy_host}}/<route>.
+
+artifacts:
+  # - title: Hello Artifact
+  #   route: /hello-artifact.html
+  #   tags: [demo]
+  #   description: A button-counter that demonstrates window.storage persistence.

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript, layered verification harness, optional example artifact).
+- `status` and `dashboard` CLI subcommands using Rich and Textual.  #23
+- Claude Code GitHub Actions workflow.  #27
+
+### Changed
+
+- `make test` now runs `mypy` as part of the gate; uv integrated into the development workflow.  #26, #28
+- Makefiles use `uv run` to execute Python tools.  #21
+- Template ships with ruff rulesets SIM, PIE, RET, C90, C4, N, PLW, PLC enabled.  #15
+- Codified TDD discipline in `AGENTS.md`: red→green pairs, property-enumeration requirement (behavior/propagation/inverse-branch/sweep) before commit #1, and behavior-over-module naming for `test(...)` subjects.
+
+### Removed
+
+- `hello` subcommand from the recipes CLI.
+- `claude-code-review` GitHub Actions workflow.
+
 ## [1.0.0] - 2026-02-13
 
 ### Added
