@@ -9,25 +9,20 @@ import pathlib
 import subprocess
 
 import pytest
-from cookiecutter.main import cookiecutter
 
-from tests.helpers import paths
-
-TEMPLATE_DIRECTORY = str(pathlib.Path(__file__).parent.parent / "cookbook" / "repo-cli")
+from tests.helpers import bake, makefile_recipe, mermaid_block, paths
 
 
 def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
-    cookiecutter(
-        template=TEMPLATE_DIRECTORY,
-        output_dir=str(tmp_path),
-        no_input=True,
+    return bake(
+        "repo-cli",
+        tmp_path,
         extra_context={
             "project_name": "Demo Repo CLI",
             "target_repo": "demo-repo",
             "include_github_workflows": workflow,
         },
     )
-    return tmp_path / "demo-repo-cli"
 
 
 # ---------------------------------------------------------------------------
@@ -234,17 +229,7 @@ class TestBakeWithWorkflow:
     def test_makefile_setup_ci_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
         """setup-ci uses --frozen to enforce lockfile fidelity in CI."""
         makefile = (baked / "Makefile").read_text()
-        lines = makefile.splitlines()
-        setup_ci_idx = next(
-            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
-        )
-        recipe = []
-        for line in lines[setup_ci_idx + 1 :]:
-            if line and not line.startswith(("\t", " ")):
-                break
-            recipe.append(line)
-        recipe_text = "\n".join(recipe)
-        assert "uv sync --frozen" in recipe_text
+        assert "uv sync --frozen" in makefile_recipe(makefile, "setup-ci")
 
     def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
@@ -284,9 +269,7 @@ class TestBakeWithWorkflow:
         and make setup-ci / make test (ci path). Renames in either workflow
         surface as a red test."""
         readme = (baked / "README.md").read_text()
-        start = readme.find("```mermaid")
-        end = readme.find("```", start + len("```mermaid"))
-        mermaid = readme[start:end]
+        mermaid = mermaid_block(readme)
         assert "make setup-ci" in mermaid
         assert "make test" in mermaid
         assert "cog" in mermaid

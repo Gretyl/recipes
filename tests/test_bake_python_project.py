@@ -10,13 +10,8 @@ import pathlib
 import subprocess
 
 import pytest
-from cookiecutter.main import cookiecutter
 
-from tests.helpers import paths
-
-TEMPLATE_DIRECTORY = str(
-    pathlib.Path(__file__).parent.parent / "cookbook" / "python-project"
-)
+from tests.helpers import bake, makefile_recipe, mermaid_block, paths
 
 
 class TestBakeDefaults:
@@ -24,13 +19,7 @@ class TestBakeDefaults:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("defaults")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
-        )
-        return tmp_path / "fresh-project"
+        return bake("python-project", tmp_path_factory.mktemp("defaults"))
 
     def test_output_directory_exists(self, baked: pathlib.Path) -> None:
         assert baked.is_dir()
@@ -230,12 +219,7 @@ class TestMakeDistValidation:
 
     @pytest.fixture()
     def baked(self, tmp_path: pathlib.Path) -> pathlib.Path:
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
-        )
-        project = tmp_path / "fresh-project"
+        project = bake("python-project", tmp_path)
         # Initialise a git repo so the dist guards can run.
         self._git("init", cwd=project)
         self._git("add", ".", cwd=project)
@@ -288,18 +272,15 @@ class TestBakeCustomContext:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("custom")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "python-project",
+            tmp_path_factory.mktemp("custom"),
             extra_context={
                 "project_name": "Widget Factory",
                 "project_slug": "widget-factory",
                 "package_name": "widget_factory",
             },
         )
-        return tmp_path / "widget-factory"
 
     def test_output_directory_named_by_slug(self, baked: pathlib.Path) -> None:
         assert baked.is_dir()
@@ -357,14 +338,11 @@ class TestBakeWithWorkflow:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("workflow")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "python-project",
+            tmp_path_factory.mktemp("workflow"),
             extra_context={"include_github_workflows": "yes"},
         )
-        return tmp_path / "fresh-project"
 
     def test_ci_workflow_file_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".github" / "workflows" / "ci.yml").is_file()
@@ -386,18 +364,7 @@ class TestBakeWithWorkflow:
     def test_makefile_setup_ci_runs_uv_sync_frozen(self, baked: pathlib.Path) -> None:
         """The CI-specific bit of setup-ci: --frozen enforces lockfile fidelity."""
         makefile = (baked / "Makefile").read_text()
-        lines = makefile.splitlines()
-        setup_ci_idx = next(
-            i for i, line in enumerate(lines) if line.startswith("setup-ci:")
-        )
-        # Scan the recipe lines until the next target or blank line
-        recipe = []
-        for line in lines[setup_ci_idx + 1 :]:
-            if line and not line.startswith(("\t", " ")):
-                break
-            recipe.append(line)
-        recipe_text = "\n".join(recipe)
-        assert "uv sync --frozen" in recipe_text
+        assert "uv sync --frozen" in makefile_recipe(makefile, "setup-ci")
 
     def test_makefile_setup_ci_is_phony(self, baked: pathlib.Path) -> None:
         makefile = (baked / "Makefile").read_text()
@@ -433,9 +400,7 @@ class TestBakeWithWorkflow:
     def test_readme_mermaid_names_setup_ci_and_test(self, baked: pathlib.Path) -> None:
         """Propagation: if Makefile targets rename, the flowchart must too."""
         readme = (baked / "README.md").read_text()
-        start = readme.find("```mermaid")
-        end = readme.find("```", start + len("```mermaid"))
-        mermaid = readme[start:end]
+        mermaid = mermaid_block(readme)
         assert "make setup-ci" in mermaid
         assert "make test" in mermaid
 
@@ -445,14 +410,11 @@ class TestBakeWithoutWorkflow:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("no-workflow")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "python-project",
+            tmp_path_factory.mktemp("no-workflow"),
             extra_context={"include_github_workflows": "no"},
         )
-        return tmp_path / "fresh-project"
 
     def test_no_github_directory(self, baked: pathlib.Path) -> None:
         assert not (baked / ".github").exists()

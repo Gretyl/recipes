@@ -11,11 +11,8 @@ import shutil
 import subprocess
 
 import pytest
-from cookiecutter.main import cookiecutter
 
-TEMPLATE_DIRECTORY = str(
-    pathlib.Path(__file__).parent.parent / "cookbook" / "artifact-bench"
-)
+from tests.helpers import bake, mermaid_block, readme_section
 
 
 class TestBakeDefaults:
@@ -23,13 +20,7 @@ class TestBakeDefaults:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("defaults")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
-        )
-        return tmp_path / "fresh-artifacts"
+        return bake("artifact-bench", tmp_path_factory.mktemp("defaults"))
 
     def test_output_directory_exists(self, baked: pathlib.Path) -> None:
         assert baked.is_dir()
@@ -253,14 +244,11 @@ class TestBakeWithExample:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("with-example")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("with-example"),
             extra_context={"include_example_artifact": "yes"},
         )
-        return tmp_path / "fresh-artifacts"
 
     def test_example_artifact_html_uses_ts_check(self, baked: pathlib.Path) -> None:
         """The example demonstrates the JSDoc-typed inline-script pattern — @ts-check is the gateway."""
@@ -313,11 +301,9 @@ class TestBakeCustomContext:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("custom")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("custom"),
             extra_context={
                 "project_name": "Cosmic Demos",
                 "project_slug": "cosmic-demos",
@@ -325,7 +311,6 @@ class TestBakeCustomContext:
                 "include_example_artifact": "yes",
             },
         )
-        return tmp_path / "cosmic-demos"
 
     def test_custom_project_slug_names_output_directory(
         self, baked: pathlib.Path
@@ -415,14 +400,11 @@ class TestBakeWithWorkflow:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("workflow")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("workflow"),
             extra_context={"include_github_workflows": "yes"},
         )
-        return tmp_path / "fresh-artifacts"
 
     # ---- ci.yml shape ----
 
@@ -501,13 +483,7 @@ class TestBakeWithWorkflow:
         """Scoped to the ## CI section so incidental 'verify' mentions elsewhere
         don't hide a regression in the CI docs themselves."""
         readme = (baked / "README.md").read_text()
-        ci_start = readme.find("## CI")
-        assert ci_start != -1, "README has no ## CI section"
-        ci_end = readme.find("\n## ", ci_start + len("## CI"))
-        if ci_end == -1:
-            ci_end = len(readme)
-        ci_section = readme[ci_start:ci_end].lower()
-        assert "verify" in ci_section
+        assert "verify" in readme_section(readme, "CI").lower()
 
     def test_readme_ci_section_flags_e2e_deferred_to_v1_2(
         self, baked: pathlib.Path
@@ -515,13 +491,7 @@ class TestBakeWithWorkflow:
         """A puncher must see that browser-level e2e is intentional future work,
         not a forgotten gap."""
         readme = (baked / "README.md").read_text()
-        ci_start = readme.find("## CI")
-        assert ci_start != -1
-        ci_end = readme.find("\n## ", ci_start + len("## CI"))
-        if ci_end == -1:
-            ci_end = len(readme)
-        ci_section = readme[ci_start:ci_end]
-        assert "rodney" in ci_section.lower()
+        assert "rodney" in readme_section(readme, "CI").lower()
 
     def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
         readme = (baked / "README.md").read_text()
@@ -534,9 +504,7 @@ class TestBakeWithWorkflow:
         """Propagation: the flowchart must name every make target the workflow invokes.
         If ci.yml adds or renames a target, the flowchart must track it."""
         readme = (baked / "README.md").read_text()
-        start = readme.find("```mermaid")
-        end = readme.find("```", start + len("```mermaid"))
-        mermaid = readme[start:end]
+        mermaid = mermaid_block(readme)
         assert "make verify" in mermaid
         assert "make test-unit" in mermaid
         # run-e2e / make setup-ci / make test-e2e must NOT appear — those
@@ -550,14 +518,11 @@ class TestBakeWithoutWorkflow:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("no-workflow")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("no-workflow"),
             extra_context={"include_github_workflows": "no"},
         )
-        return tmp_path / "fresh-artifacts"
 
     def test_no_github_directory(self, baked: pathlib.Path) -> None:
         assert not (baked / ".github").exists()
@@ -600,13 +565,11 @@ def test_baked_artifact_bench_verify_job_runs_green(
     with Playwright; the v1.2 rodney-based replacement will add a
     separate smoke test for that path.
     """
-    cookiecutter(
-        template=TEMPLATE_DIRECTORY,
-        output_dir=str(tmp_path),
-        no_input=True,
+    baked = bake(
+        "artifact-bench",
+        tmp_path,
         extra_context={"include_example_artifact": "yes"},
     )
-    baked = tmp_path / "fresh-artifacts"
 
     install = subprocess.run(
         ["npm", "install"],
