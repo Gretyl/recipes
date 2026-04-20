@@ -32,11 +32,14 @@ export function loadArtifact(
     runScripts: opts.runScripts === false ? undefined : "dangerously",
     pretendToBeVisual: true,
     url: "https://artifact.test/",
+    // Install the storage mock before any inline script parses, so
+    // `const store = window.storage;` at module scope resolves to
+    // the mock, not undefined.
+    beforeParse(window) {
+      (window as unknown as { storage: StorageMock }).storage = storage;
+    },
   };
   const dom = new JSDOM(html, jsdomOpts);
-  // Expose the mock on the window so artifact code can reach it via
-  // window.storage exactly as it does inside Claude.
-  (dom.window as unknown as { storage: StorageMock }).storage = storage;
   return {
     dom,
     window: dom.window,

@@ -1,6 +1,6 @@
 # {{cookiecutter.project_slug}}/Makefile
 .PHONY: help install verify verify-structure verify-types verify-html \
-        test test-unit test-e2e build ci clean
+        test test-unit build ci clean
 .DEFAULT_GOAL := help
 
 # Discover artifacts (supports src/foo/ and src/category/foo/)
@@ -12,9 +12,9 @@ SCOPE    := $(if $(ARTIFACT),src/$(ARTIFACT),src)
 
 help:
 	@echo "Targets:"
-	@echo "  install      npm deps + playwright browsers"
+	@echo "  install      npm dependencies"
 	@echo "  verify       static checks   (structure, types, html)"
-	@echo "  test         runtime checks  (unit + e2e)"
+	@echo "  test         runtime checks  (unit)"
 	@echo "  build        src/*/artifact.html -> public/"
 	@echo "  ci           verify && test && build"
 	@echo "  clean        remove generated output"
@@ -22,8 +22,7 @@ help:
 	@echo "Scope to one: make <target> ARTIFACT=implode"
 
 install:
-	npm ci
-	npx playwright install --with-deps
+	npm install
 
 # ---- verify: fast, static, no browser, no jsdom ----
 
@@ -45,17 +44,13 @@ verify-html:
 	@echo "-> html-validate"
 	npx html-validate "$(SCOPE)/**/artifact.html"
 
-# ---- test: runtime ----
+# ---- test: runtime (unit only until v1.2 rodney-based e2e returns) ----
 
-test: test-unit test-e2e
+test: test-unit
 
 test-unit:
 	@echo "-> vitest (jsdom/happy-dom)"
 	npx vitest run $(SCOPE)
-
-test-e2e:
-	@echo "-> playwright"
-	npx playwright test $(if $(ARTIFACT),--grep "$(ARTIFACT)",)
 
 # ---- build + meta ----
 
@@ -66,4 +61,4 @@ build:
 ci: verify test build
 
 clean:
-	rm -rf public/ test-results/ playwright-report/ node_modules/.vitest
+	rm -rf public/ node_modules/.vitest

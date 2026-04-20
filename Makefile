@@ -8,6 +8,7 @@ help:
 	@printf "%-12s %s\n" "dist" "Prepare a versioned release in dist/."
 	@printf "%-12s %s\n" "format" "Format code using ruff."
 	@printf "%-12s %s\n" "mypy" "Type-check sources with mypy after format/check."
+	@printf "%-12s %s\n" "setup-ci" "Install CI-locked dependencies (uv sync --frozen)."
 	@printf "%-12s %s\n" "test" "Run tests with coverage after check, format, and mypy."
 
 # Define the directories to be checked and tested
@@ -47,6 +48,10 @@ format:
 mypy: format check
 	@echo "🥧  Running mypy..."
 	@uv run mypy $(PYTHON_DIRS)
+
+setup-ci:
+	@echo "📦 Installing CI-locked dependencies..."
+	@uv sync --frozen
 
 dist: test
 	@echo "📦 Preparing versioned release..."
@@ -94,4 +99,4 @@ dist: test
 	echo "✅ All release checks passed for version $$PKG_VERSION."; \
 	uv build --out-dir dist/
 
-.PHONY: help clean test check format mypy dist
+.PHONY: help clean test check format mypy setup-ci dist

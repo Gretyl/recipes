@@ -1,19 +1,22 @@
 # python-project template demo
 
-*2026-02-13T22:00:58Z*
+*2026-04-19T15:59:07Z by Showboat 0.6.1*
+<!-- showboat-id: c87fe4eb-0496-4c29-a83e-d38dcfa11ab9 -->
 
-The python-project template scaffolds a uv-managed Python project with ruff, mypy, pytest, and direnv support. It includes a baseline `hello_world` implementation so `make test` passes immediately after baking.
+The python-project template scaffolds a uv-managed Python project with ruff, mypy, pytest, and direnv support. It includes a baseline `hello_world` implementation so `make test` passes immediately after baking. v1.1 adds an `include_github_workflows` flag that bakes a `.github/workflows/ci.yml` and a `make setup-ci` target so generated projects ship with an opinionated CI gate.
 
-Bake the template with defaults (project_name=Fresh Project):
+Bake the template with defaults (project_name=Fresh Project, include_github_workflows=yes):
 
 ```bash
-rm -rf /tmp/python-project-demo && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/python-project --no-input --output-dir /tmp/python-project-demo && find /tmp/python-project-demo/fresh-project -type f | sort | sed 's|/tmp/python-project-demo/||'
+rm -rf /tmp/python-project-demo && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/python-project --no-input --output-dir /tmp/python-project-demo && find /tmp/python-project-demo/fresh-project -type f | sort | sed "s|/tmp/python-project-demo/||"
 ```
 
 ```output
 fresh-project/.envrc
 fresh-project/.gitattributes
+fresh-project/.github/workflows/ci.yml
 fresh-project/.gitignore
+fresh-project/AGENTS.md
 fresh-project/Makefile
 fresh-project/README.md
 fresh-project/docs/spec.md
@@ -24,27 +27,50 @@ fresh-project/scripts/.gitkeep
 fresh-project/tests/test_main.py
 ```
 
-The baseline package exports a `hello_world` function:
+The `.github/workflows/ci.yml` gated by the flag runs `make setup-ci && make test` on every PR and on push to main:
 
 ```bash
-PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/bin/python3.13 -c 'from fresh_project import hello_world; print(hello_world())'
+cat /tmp/python-project-demo/fresh-project/.github/workflows/ci.yml
 ```
 
 ```output
-Hello, world!
+# CI workflow for fresh-project.
+#
+# Runs the full `make test` gate on every pull request and on push to
+# main. See README.md's "CI" section for the trigger-to-step flow
+# and the local-equivalent commands.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install CI-locked dependencies
+        run: make setup-ci
+
+      - name: Run test gate
+        run: make test
 ```
 
-It also works as a script via `main()`:
-
-```bash
-PYTHONPATH=/tmp/python-project-demo/fresh-project /usr/bin/python3.13 -c 'from fresh_project.main import main; main()'
-```
-
-```output
-Hello, world!
-```
-
-The Makefile provides the standard development targets:
+`make help` lists the new `setup-ci` target alongside the existing development targets:
 
 ```bash
 make -C /tmp/python-project-demo/fresh-project help
@@ -59,57 +85,46 @@ clean        Remove build, cache, venv, lock, and dist artifacts.
 dist         Prepare a versioned release in dist/.
 format       Format code using ruff.
 mypy         Type-check sources with mypy after format/check.
-test         Run tests with coverage after check and format.
+setup-ci     Install CI-locked dependencies (uv sync --frozen).
+test         Run tests with coverage after check, format, and mypy.
 make: Leaving directory '/tmp/python-project-demo/fresh-project'
 ```
 
-The pyproject.toml targets Python 3.13 with hatchling, includes click and pydantic as defaults, and enables strict mypy:
+The baked README gains a `## CI` section linking the workflow file to its local-equivalent commands, with a Mermaid flowchart showing the trigger-to-step path:
 
 ```bash
-cat /tmp/python-project-demo/fresh-project/pyproject.toml
+sed -n "/^## CI/,/^## /p" /tmp/python-project-demo/fresh-project/README.md | sed "$ d"
+```
+
+````output
+## CI
+
+The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` that runs `make test` on every pull request and on push to `main`. To run the same gate locally:
+
+```bash
+make setup-ci && make test
+```
+
+`make setup-ci` is the CI-specific analog of the `First run` quickstart — it uses `uv sync --frozen` to enforce lockfile fidelity, catching drift that would otherwise surface only in CI.
+
+```mermaid
+flowchart LR
+    A[PR or push to main] --> B[Checkout + setup Python/uv]
+    B --> C[make setup-ci]
+    C --> D[make test]
+    D --> E{Pass?}
+    E -->|Yes| F[Green]
+    E -->|No| G[Red]
+```
+````
+
+Setting `include_github_workflows=no` removes the `.github/` directory via the post-generation hook, leaving the rest of the project scaffold intact for users who don't want CI:
+
+```bash
+rm -rf /tmp/python-project-demo-no-wf && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/python-project --no-input --output-dir /tmp/python-project-demo-no-wf include_github_workflows=no 2>&1; test -d /tmp/python-project-demo-no-wf/fresh-project/.github && echo ".github/ exists" || echo "No .github/ directory"; test -f /tmp/python-project-demo-no-wf/fresh-project/Makefile && echo "Makefile still present"
 ```
 
 ```output
-[project]
-name = "fresh-project"
-version = "0.1.0"
-description = "My take on Fresh Project"
-readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "click",
-    "pydantic",
-]
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock",
-    "pyyaml",
-    "ruff",
-    "mypy",
-]
-
-[tool.mypy]
-python_version = "3.13"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-disallow_untyped_decorators = true
-no_implicit_optional = true
-strict_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-
-[[tool.mypy.overrides]]
-module = "fresh_project.*"
-ignore_missing_imports = true
+No .github/ directory
+Makefile still present
 ```

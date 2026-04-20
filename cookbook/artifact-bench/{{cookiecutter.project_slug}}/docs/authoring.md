@@ -14,7 +14,7 @@ src/<artifact-slug>/
 ├── PROMPTS.md          # seed prompt + iteration log
 ├── notes.md            # design decisions (optional)
 ├── fixtures/           # seeded data, save states (optional)
-└── tests/              # unit.spec.ts, e2e.spec.ts (optional, layered)
+└── tests/              # unit.spec.ts (optional)
 ```
 
 `artifact.html` is the **only required file** alongside `README.md`

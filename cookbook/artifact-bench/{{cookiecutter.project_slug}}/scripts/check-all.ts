@@ -9,7 +9,6 @@ const steps: Array<[string, string[]]> = [
   ["npx", ["tsc", "--noEmit", "-p", "tsconfig.json"]],
   ["npx", ["html-validate", "src/**/artifact.html"]],
   ["npx", ["vitest", "run"]],
-  ["npx", ["playwright", "test"]],
 ];
 
 for (const [cmd, args] of steps) {

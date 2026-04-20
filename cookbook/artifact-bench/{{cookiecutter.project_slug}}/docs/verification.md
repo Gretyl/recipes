@@ -13,16 +13,18 @@ Two layers, both Make-driven.
 Runs in seconds. Safe to bind to a save hook. Always run before
 committing.
 
-## `make test` — runtime, jsdom + browser
+## `make test` — runtime, jsdom
 
 | Sub-target | Tool | What it catches |
 |------------|------|-----------------|
 | `test-unit` | `vitest` + `jsdom` | Logic exercised through the shared `load-artifact` harness — game state machines, form validation, score submission |
-| `test-e2e`  | `playwright`        | Real browser interaction against `public/` — canvas rendering, click sequences, persistence |
 
-E2E tests require a built `public/` (Playwright's `webServer`
-launches `scripts/serve.ts` to host it). Run `make build` first if
-you've changed `artifact.html` since the last e2e run.
+Browser-level e2e (real-browser interaction against `public/`) is
+deferred to a future release via a lightweight rodney-based
+replacement for Playwright. Until then, drive `make test-unit`'s
+jsdom harness as far as it will go; assertions against the
+accessible-DOM shape cover most regressions that don't depend on
+real browser rendering.
 
 ## Per-artifact scoping
 
@@ -44,8 +46,6 @@ regression you wish you'd caught automatically — that's also when
 you'll know exactly what assertion would have caught it.
 
 - A click handler regressed → `unit.spec.ts` exercising the handler.
-- The canvas drew the wrong frame → `e2e.spec.ts` with a screenshot
-  assertion.
 - Persistence reset between sessions → `unit.spec.ts` against the
   storage mock.
 

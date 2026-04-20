@@ -58,7 +58,7 @@ Ported the Cog-based README template management system from `grimoire/repo-cli` 
 
 - **`template.py`** — Business logic (Pydantic models, Cog constants, apply/prepare functions) and Click command group with `apply` and `prepare` subcommands. Placed at `tui/template.py` inside the namespace package (grimoire had it flat at package root).
 - **GitHub Actions workflow** (`update-readme.yml`) — Adapted for uv: Python 3.13, `astral-sh/setup-uv@v4`, `uv pip install --system` instead of `pip install`.
-- **Post-generation hook** (`hooks/post_gen_project.py`) — Conditionally removes `.github/` when `include_github_workflow` is "no". Copied verbatim.
+- **Post-generation hook** (`hooks/post_gen_project.py`) — Conditionally removes `.github/` when `include_github_workflows` is "no". Copied verbatim.
 - **54 template-level tests** in three files (`test_template.py`, `test_template_apply.py`, `test_template_prepare.py`) — Only import paths changed.
 - **`requirements.txt`** — CI-only dependency (`cogapp`).
 

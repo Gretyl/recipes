@@ -7,13 +7,12 @@ trees and file contents.
 
 import json
 import pathlib
+import shutil
+import subprocess
 
 import pytest
-from cookiecutter.main import cookiecutter
 
-TEMPLATE_DIRECTORY = str(
-    pathlib.Path(__file__).parent.parent / "cookbook" / "artifact-bench"
-)
+from tests.helpers import bake, mermaid_block, readme_section
 
 
 class TestBakeDefaults:
@@ -21,13 +20,7 @@ class TestBakeDefaults:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("defaults")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
-        )
-        return tmp_path / "fresh-artifacts"
+        return bake("artifact-bench", tmp_path_factory.mktemp("defaults"))
 
     def test_output_directory_exists(self, baked: pathlib.Path) -> None:
         assert baked.is_dir()
@@ -72,19 +65,24 @@ class TestBakeDefaults:
         assert "ARTIFACT ?=" in makefile
 
     def test_package_json_declares_required_devdeps(self, baked: pathlib.Path) -> None:
-        """The Makefile invokes npx tsc/html-validate/vitest/playwright/tsx — package.json must provide them."""
+        """The Makefile invokes npx tsc/html-validate/vitest/tsx — package.json must provide them."""
         pkg = json.loads((baked / "package.json").read_text())
         dev_deps = pkg.get("devDependencies", {})
         for required in (
             "typescript",
             "html-validate",
-            "@playwright/test",
             "vitest",
             "jsdom",
             "tsx",
             "js-yaml",
         ):
             assert required in dev_deps, f"missing devDependency: {required}"
+
+    def test_package_json_omits_playwright(self, baked: pathlib.Path) -> None:
+        """Playwright is descoped for v1.1; the browser-e2e layer returns in v1.2 via rodney."""
+        pkg = json.loads((baked / "package.json").read_text())
+        dev_deps = pkg.get("devDependencies", {})
+        assert "@playwright/test" not in dev_deps
 
     def test_package_json_omits_scripts_block(self, baked: pathlib.Path) -> None:
         """Make is the interface — package.json scripts would compete and confuse."""
@@ -120,11 +118,9 @@ class TestBakeDefaults:
         extends = cfg.get("extends", [])
         assert any("html-validate:recommended" in item for item in extends)
 
-    def test_playwright_config_targets_e2e_specs(self, baked: pathlib.Path) -> None:
-        """playwright.config.ts must restrict testMatch to e2e.spec.ts so unit specs don't double-run."""
-        cfg = (baked / "playwright.config.ts").read_text()
-        assert "e2e.spec.ts" in cfg
-        assert "testDir" in cfg
+    def test_no_playwright_config(self, baked: pathlib.Path) -> None:
+        """playwright.config.ts is descoped for v1.1; rodney-based e2e in v1.2 won't reuse it."""
+        assert not (baked / "playwright.config.ts").exists()
 
     def test_vitest_config_targets_unit_specs_with_jsdom(
         self, baked: pathlib.Path
@@ -144,13 +140,12 @@ class TestBakeDefaults:
         assert "window" in shim.lower() or "Window" in shim
         assert "storage" in shim.lower()
 
-    def test_scripts_implement_build_gallery_check_serve(
-        self, baked: pathlib.Path
-    ) -> None:
-        """The Makefile invokes tsx scripts/{build,gallery}.ts; playwright invokes scripts/serve.ts; check-all is the orchestrator referenced in the proposal."""
+    def test_scripts_implement_build_gallery_check(self, baked: pathlib.Path) -> None:
+        """The Makefile invokes tsx scripts/{build,gallery}.ts; check-all is the orchestrator referenced in the proposal. scripts/serve.ts is descoped alongside playwright."""
         scripts = baked / "scripts"
-        for name in ("build.ts", "gallery.ts", "check-all.ts", "serve.ts"):
+        for name in ("build.ts", "gallery.ts", "check-all.ts"):
             assert (scripts / name).is_file(), f"missing scripts/{name}"
+        assert not (scripts / "serve.ts").exists()
         build_src = (scripts / "build.ts").read_text()
         # build walks src/ and writes to public/
         assert "src" in build_src
@@ -207,13 +202,11 @@ class TestBakeDefaults:
     def test_gitignore_excludes_node_modules_and_build_output(
         self, baked: pathlib.Path
     ) -> None:
-        """A fresh clone must not commit node_modules, public/ build output, or test reports."""
+        """A fresh clone must not commit node_modules or public/ build output."""
         gitignore = (baked / ".gitignore").read_text()
         for pattern in (
             "node_modules",
             "public/",
-            "test-results",
-            "playwright-report",
         ):
             assert pattern in gitignore, f".gitignore missing pattern: {pattern}"
 
@@ -251,14 +244,11 @@ class TestBakeWithExample:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("with-example")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("with-example"),
             extra_context={"include_example_artifact": "yes"},
         )
-        return tmp_path / "fresh-artifacts"
 
     def test_example_artifact_html_uses_ts_check(self, baked: pathlib.Path) -> None:
         """The example demonstrates the JSDoc-typed inline-script pattern — @ts-check is the gateway."""
@@ -271,15 +261,11 @@ class TestBakeWithExample:
         """When the example tree ships, src/ is no longer empty — .gitkeep would be redundant noise."""
         assert not (baked / "src" / ".gitkeep").exists()
 
-    def test_example_e2e_spec_loads_from_public(self, baked: pathlib.Path) -> None:
-        """tests/e2e.spec.ts must hit the built artifact under public/ — that's what playwright.config.ts serves and what production deploys."""
+    def test_no_example_e2e_spec(self, baked: pathlib.Path) -> None:
+        """tests/e2e.spec.ts is descoped alongside playwright; the v1.2 rodney-based
+        replacement will land its own replacement example."""
         spec = baked / "src" / "hello-artifact" / "tests" / "e2e.spec.ts"
-        assert spec.is_file()
-        text = spec.read_text()
-        assert "@playwright/test" in text
-        assert "hello-artifact" in text
-        # It should reference a route, not a file path — playwright serves public/ over HTTP.
-        assert "/hello-artifact" in text or "hello-artifact.html" in text
+        assert not spec.exists()
 
     def test_example_unit_spec_uses_shared_harness(self, baked: pathlib.Path) -> None:
         """tests/unit.spec.ts must import the shared loader so future artifacts copy the pattern instead of reinventing jsdom setup."""
@@ -315,11 +301,9 @@ class TestBakeCustomContext:
 
     @pytest.fixture(scope="class")
     def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        tmp_path = tmp_path_factory.mktemp("custom")
-        cookiecutter(
-            template=TEMPLATE_DIRECTORY,
-            output_dir=str(tmp_path),
-            no_input=True,
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("custom"),
             extra_context={
                 "project_name": "Cosmic Demos",
                 "project_slug": "cosmic-demos",
@@ -327,7 +311,6 @@ class TestBakeCustomContext:
                 "include_example_artifact": "yes",
             },
         )
-        return tmp_path / "cosmic-demos"
 
     def test_custom_project_slug_names_output_directory(
         self, baked: pathlib.Path
@@ -410,3 +393,213 @@ class TestBakeCustomContext:
             if "cookiecutter." in text and "{{" in text:
                 offenders.append(path.relative_to(baked))
         assert not offenders, f"unrendered cookiecutter tokens remain: {offenders}"
+
+
+class TestBakeWithWorkflow:
+    """Tests specific to include_github_workflows='yes' in artifact-bench."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("workflow"),
+            extra_context={"include_github_workflows": "yes"},
+        )
+
+    # ---- ci.yml shape ----
+
+    def test_ci_workflow_file_exists(self, baked: pathlib.Path) -> None:
+        assert (baked / ".github" / "workflows" / "ci.yml").is_file()
+
+    def test_ci_workflow_defines_verify_job(self, baked: pathlib.Path) -> None:
+        """v1.1 ships a single verify job. The e2e job returns in v1.2 via rodney."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "verify:" in yml
+
+    def test_ci_workflow_has_no_e2e_job(self, baked: pathlib.Path) -> None:
+        """Playwright is descoped for v1.1; no job line should mention e2e."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "e2e:" not in yml
+
+    def test_ci_workflow_triggers_include_pull_request(
+        self, baked: pathlib.Path
+    ) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "pull_request:" in yml
+
+    def test_ci_workflow_triggers_include_push_to_main(
+        self, baked: pathlib.Path
+    ) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "push:" in yml
+        assert "main" in yml
+
+    def test_ci_workflow_has_no_label_or_dispatch_triggers(
+        self, baked: pathlib.Path
+    ) -> None:
+        """workflow_dispatch and the run-e2e label gated the descoped e2e job; without e2e, neither is needed."""
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "workflow_dispatch" not in yml
+        assert "run-e2e" not in yml
+
+    def test_ci_verify_job_invokes_npm_ci(self, baked: pathlib.Path) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "npm ci" in yml
+
+    def test_ci_verify_job_invokes_make_verify(self, baked: pathlib.Path) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make verify" in yml
+
+    def test_ci_verify_job_invokes_make_test_unit(self, baked: pathlib.Path) -> None:
+        yml = (baked / ".github" / "workflows" / "ci.yml").read_text()
+        assert "make test-unit" in yml
+
+    # ---- Makefile ----
+
+    def test_makefile_has_no_setup_ci_or_test_e2e_targets(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Both descoped alongside playwright for v1.1. They return in v1.2."""
+        makefile = (baked / "Makefile").read_text()
+        assert "setup-ci:" not in makefile
+        assert "test-e2e:" not in makefile
+
+    def test_makefile_install_target_present(self, baked: pathlib.Path) -> None:
+        """install is the local-dev affordance — survives the playwright descope."""
+        makefile = (baked / "Makefile").read_text()
+        assert "install:" in makefile
+
+    # ---- README CI section ----
+
+    def test_readme_has_ci_section(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "## CI" in readme
+
+    def test_readme_ci_section_names_workflow_file(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert ".github/workflows/ci.yml" in readme
+
+    def test_readme_ci_section_names_verify_job(self, baked: pathlib.Path) -> None:
+        """Scoped to the ## CI section so incidental 'verify' mentions elsewhere
+        don't hide a regression in the CI docs themselves."""
+        readme = (baked / "README.md").read_text()
+        assert "verify" in readme_section(readme, "CI").lower()
+
+    def test_readme_ci_section_flags_e2e_deferred_to_v1_2(
+        self, baked: pathlib.Path
+    ) -> None:
+        """A puncher must see that browser-level e2e is intentional future work,
+        not a forgotten gap."""
+        readme = (baked / "README.md").read_text()
+        assert "rodney" in readme_section(readme, "CI").lower()
+
+    def test_readme_ci_section_has_mermaid_flowchart(self, baked: pathlib.Path) -> None:
+        readme = (baked / "README.md").read_text()
+        assert "```mermaid" in readme
+        assert "flowchart" in readme
+
+    def test_readme_mermaid_names_verify_make_targets(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: the flowchart must name every make target the workflow invokes.
+        If ci.yml adds or renames a target, the flowchart must track it."""
+        readme = (baked / "README.md").read_text()
+        mermaid = mermaid_block(readme)
+        assert "make verify" in mermaid
+        assert "make test-unit" in mermaid
+        # run-e2e / make setup-ci / make test-e2e must NOT appear — those
+        # are descoped until v1.2.
+        assert "make setup-ci" not in mermaid
+        assert "make test-e2e" not in mermaid
+
+
+class TestBakeWithoutWorkflow:
+    """Tests specific to include_github_workflows='no' in artifact-bench."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("no-workflow"),
+            extra_context={"include_github_workflows": "no"},
+        )
+
+    def test_no_github_directory(self, baked: pathlib.Path) -> None:
+        assert not (baked / ".github").exists()
+
+    def test_readme_has_no_ci_section(self, baked: pathlib.Path) -> None:
+        """When the flag is no, the CI section must not leak into the README."""
+        readme = (baked / "README.md").read_text()
+        assert "## CI" not in readme
+
+    def test_install_target_still_present(self, baked: pathlib.Path) -> None:
+        """Inverse sanity: the hook only removes .github/; the local-dev install stays."""
+        makefile = (baked / "Makefile").read_text()
+        assert "install:" in makefile
+
+
+# ---------------------------------------------------------------------------
+# End-to-end smoke: bake, install, run `make ci` inside the output.
+# Gated by @pytest.mark.slow so it only runs when explicitly enabled.
+# Guards the combined correctness of Makefile targets, package.json
+# devDeps, and the new CI workflow shape — any regression in those
+# surfaces here as a red slow test.
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.slow()
+@pytest.mark.skipif(shutil.which("npm") is None, reason="npm not installed")
+def test_baked_artifact_bench_verify_job_runs_green(
+    tmp_path: pathlib.Path,
+) -> None:
+    """Smoke test: replays the ci.yml verify job locally.
+
+    A fresh bake with the example artifact must pass
+    ``npm install`` + ``make verify`` + ``make test-unit``. This
+    matches exactly what ci.yml runs on every PR — if it greens
+    here, the PR-time gate will green in CI.
+
+    Covers four of the five layered verifications: structure, types
+    (tsc ``--checkJs``), html-validate, and jsdom unit specs.
+    Browser-level e2e (the fifth layer) is descoped from v1.1 along
+    with Playwright; the v1.2 rodney-based replacement will add a
+    separate smoke test for that path.
+    """
+    baked = bake(
+        "artifact-bench",
+        tmp_path,
+        extra_context={"include_example_artifact": "yes"},
+    )
+
+    install = subprocess.run(
+        ["npm", "install"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert install.returncode == 0, (
+        f"npm install failed:\n{install.stdout}\n{install.stderr}"
+    )
+
+    verify = subprocess.run(
+        ["make", "verify"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert verify.returncode == 0, (
+        f"make verify failed:\n{verify.stdout}\n{verify.stderr}"
+    )
+
+    test_unit = subprocess.run(
+        ["make", "test-unit"],
+        cwd=baked,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert test_unit.returncode == 0, (
+        f"make test-unit failed:\n{test_unit.stdout}\n{test_unit.stderr}"
+    )

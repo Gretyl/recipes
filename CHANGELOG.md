@@ -7,14 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-04-19
+
+### Fixed
+
+- `uv.lock` now matches `pyproject.toml` for the v1.1.x release. v1.1.0's release commit bumped `pyproject.toml` to 1.1.0 but shipped an unchanged lockfile from v1.0.0, so `uv sync --frozen` failed against the tagged state. The git server refused to reassign the v1.1.0 tag, so this patch release is the published fix — consumers should prefer v1.1.1 over v1.1.0.
+
+## [1.1.0] - 2026-04-19
+
 ### Added
 
-- Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript, layered verification harness, optional example artifact).
+- Initial `artifact-bench` cookbook template for HTML-artifact workbenches (Node/TypeScript; layered verification harness covering structure, tsc `--checkJs`, html-validate, and vitest/jsdom unit tests; optional example artifact). Browser-level e2e is planned for v1.2 via a lightweight rodney-based replacement — see `cookbook/notes/artifact-bench.md` "Deferred work".
+- `include_github_workflows` cookiecutter flag across all three cookbook templates. When `yes`, bakes a `.github/workflows/ci.yml`. For `python-project` and `repo-cli`, `ci.yml` runs `make setup-ci && make test` (with `setup-ci` doing `uv sync --frozen`); `repo-cli` continues to gate the existing `update-readme.yml` alongside the new `ci.yml`. For `artifact-bench`, `ci.yml` runs `npm ci` + `make verify` (structure + tsc `--checkJs` + html-validate) + `make test-unit` (vitest/jsdom). Baked projects include a `## CI` README section with a Mermaid flowchart documenting the trigger-to-step path.
 - `status` and `dashboard` CLI subcommands using Rich and Textual.  #23
 - Claude Code GitHub Actions workflow.  #27
 
 ### Changed
 
+- Renamed `repo-cli`'s `include_github_workflow` cookiecutter flag to `include_github_workflows` (plural) to reflect that it now gates multiple workflow files. Scripted bakes that pass the flag via `--extra-context` must update the key name; already-baked projects are unaffected.
 - `make test` now runs `mypy` as part of the gate; uv integrated into the development workflow.  #26, #28
 - Makefiles use `uv run` to execute Python tools.  #21
 - Template ships with ruff rulesets SIM, PIE, RET, C90, C4, N, PLW, PLC enabled.  #15

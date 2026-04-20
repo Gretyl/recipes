@@ -1,7 +1,5 @@
 node_modules/
 public/
-test-results/
-playwright-report/
 .vitest/
 *.log
 .DS_Store

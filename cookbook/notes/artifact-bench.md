@@ -85,14 +85,22 @@ follow the same checklist:
 
 ## Deferred work
 
-- **`npm install` smoke test.** The bake tests run cookiecutter and
-  inspect the output tree but never install dependencies or run
-  `make ci`. Pinning the actual verification chain (tsc, html-validate,
-  vitest, playwright) requires Node + browser binaries on CI, which
-  the recipes repo does not yet provision. Add this as a
-  `@pytest.mark.slow` test once a Node-capable runner is wired up. The
-  in-tree `scripts/` and configs are well-typed enough that the test
-  is a thin shell wrapper.
+- **Browser-level e2e via `rodney` (v1.2).** v1.1 ships artifact-bench
+  with four layered verifications: `verify-structure`, `verify-types`
+  (tsc `--checkJs`), `verify-html` (html-validate), and `test-unit`
+  (vitest/jsdom). Playwright was descoped before v1.1 shipped — the
+  ~300MB browser install, `webServer` timing, and `playwright.config.ts`
+  surface didn't earn their cost for a workbench whose artifacts are
+  single-file and copy-pasteable. The plan for v1.2: re-introduce
+  browser coverage via `uvx rodney` — a thin CDP wrapper over an
+  already-running Chrome. That gives us `rodney open`, `rodney click`,
+  `rodney assert` as shell primitives, wrappable in vitest if we want
+  the test-runner ergonomics, with no browser-binary download and no
+  separate config file. When this lands, re-add a `test-e2e` Makefile
+  target, a second CI job (or merge into verify — rodney's footprint
+  may make gating unnecessary), an example `e2e.spec.ts` under
+  `src/hello-artifact/tests/`, and update the README's Mermaid
+  flowchart to show both paths.
 - **`cookbook/demos/artifact-bench.md`.** Per `cookbook/AGENTS.md`,
   demos are written by `uvx showboat` once the template is ready to
   commit. Run it as the immediate follow-up to this PR — the demo

@@ -1,0 +1,38 @@
+# CI workflow for {{cookiecutter.project_slug}}.
+#
+# Runs the fast verify gate on every pull request and on push to main:
+# npm ci + make verify + make test-unit. No browser binaries — the
+# job completes in under a minute.
+#
+# End-to-end (browser) tests are deferred to v1.2 via a lightweight
+# rodney-based replacement. See cookbook/notes/artifact-bench.md
+# "Deferred work" for status.
+
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run static checks
+        run: make verify
+
+      - name: Run unit tests
+        run: make test-unit

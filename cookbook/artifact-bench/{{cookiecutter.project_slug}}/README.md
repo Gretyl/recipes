@@ -14,7 +14,7 @@ src/<artifact-slug>/
 ├── README.md           # what it is, current status
 ├── PROMPTS.md          # seed prompt + iteration log
 ├── notes.md            # design decisions (optional)
-└── tests/              # unit.spec.ts, e2e.spec.ts (optional)
+└── tests/              # unit.spec.ts (optional)
 ```
 
 `public/` mirrors the deploy URLs exactly: `src/foo/artifact.html`
@@ -24,9 +24,9 @@ becomes `public/foo.html`, served from
 ## Quickstart
 
 ```bash
-make install   # npm ci + playwright install
+make install   # npm install
 make verify    # static checks (structure, types, html)
-make test      # runtime checks (unit + e2e)
+make test      # runtime checks (unit)
 make build     # src/*/artifact.html -> public/
 make ci        # verify && test && build
 ```
@@ -44,6 +44,33 @@ that's missing the README or PROMPTS file.
 ## Verifying changes
 
 See [docs/verification.md](docs/verification.md). Two layers: fast
-static checks via `make verify`, runtime browser/jsdom checks via
+static checks via `make verify`, runtime jsdom checks via
 `make test`. Add tests opt-in, the first time you catch a regression
 you wish you'd caught automatically.
+{% if cookiecutter.include_github_workflows == "yes" %}
+## CI
+
+The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` that runs the fast verify gate on every pull request and on push to `main`:
+
+1. `npm ci`
+2. `make verify` — structure + types (tsc `--checkJs`) + html-validate
+3. `make test-unit` — vitest/jsdom unit specs
+
+No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement; see `cookbook/notes/artifact-bench.md` "Deferred work" for status.
+
+To run the same gate locally:
+
+```bash
+npm install && make verify && make test-unit
+```
+
+```mermaid
+flowchart LR
+    A[PR or push to main] --> B[npm ci]
+    B --> C[make verify]
+    C --> D[make test-unit]
+    D --> E{Pass?}
+    E -->|Yes| F[Green]
+    E -->|No| G[Red]
+```
+{% endif %}
