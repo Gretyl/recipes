@@ -53,7 +53,7 @@ Order of operations:
 1. Edit `pyproject.toml` (bump version) and `CHANGELOG.md` (rename `[Unreleased]` → `[X.Y.Z] - YYYY-MM-DD`, open a new empty `[Unreleased]`).
 2. Run `uv sync` — this regenerates `uv.lock` against the new `pyproject.toml` version. **Do this before committing**, not after; `make test` triggers `uv sync` implicitly, so running it post-commit strands lockfile changes outside the release commit.
 3. Stage `pyproject.toml`, `CHANGELOG.md`, and `uv.lock` together. Commit as `chore(release): prepare vX.Y.Z`.
-4. Tag the commit: `git tag vX.Y.Z`.
+4. Tag the commit with an **annotated** tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`. Release tags **must** be annotated — never lightweight. The `-a` flag writes a real tag object carrying tagger identity, timestamp, and message, which is what `git describe`, `git log --decorate`, and GitHub's release UI all read. A lightweight tag (`git tag vX.Y.Z`, no `-a`) looks fine locally but strands that metadata, and because the remote rejects tag delete and tag force-push (see immutability note below), a lightweight tag that has been pushed stays lightweight forever — `v1.1.0` is the existing cautionary example. Before pushing, verify with `git cat-file -t vX.Y.Z`: it must print `tag`, not `commit`. If it prints `commit`, delete locally (`git tag -d vX.Y.Z`) and redo with `-a`.
 5. Run `make dist`. It verifies the tag points at HEAD, the version/tag/CHANGELOG match, and the tree is clean. A clean pass emits `dist/recipes-X.Y.Z.tar.gz` and `.whl`.
 6. Push branch **and** tag: `git push origin <branch> && git push origin vX.Y.Z`.
 
