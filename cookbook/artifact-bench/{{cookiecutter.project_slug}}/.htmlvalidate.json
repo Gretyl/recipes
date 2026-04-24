@@ -3,6 +3,7 @@
   "rules": {
     "require-sri": "off",
     "no-inline-style": "off",
-    "no-trailing-whitespace": "off"
+    "no-trailing-whitespace": "off",
+    "no-implicit-button-type": "off"
   }
 }
