@@ -4,9 +4,8 @@
 # npm ci + make verify + make test-unit. No browser binaries — the
 # job completes in under a minute.
 #
-# End-to-end (browser) tests are deferred to v1.2 via a lightweight
-# rodney-based replacement. See cookbook/notes/artifact-bench.md
-# "Deferred work" for status.
+# End-to-end (browser) tests are deferred to a future release via a
+# lightweight rodney-based replacement.
 
 name: CI
 

@@ -42,7 +42,11 @@ verify-types:
 
 verify-html:
 	@echo "-> html-validate"
-	npx html-validate "$(SCOPE)/**/artifact.html"
+	@if [ -z "$(ARTIFACT_DIRS)" ] && [ -z "$(ARTIFACT)" ]; then \
+	  echo "ok html (no artifacts to validate)"; \
+	else \
+	  npx html-validate "$(SCOPE)/**/artifact.html"; \
+	fi
 
 # ---- test: runtime (unit only until v1.2 rodney-based e2e returns) ----
 

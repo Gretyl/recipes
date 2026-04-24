@@ -114,7 +114,7 @@ class TestBakeDefaults:
         self, baked: pathlib.Path
     ) -> None:
         """html-validate is the static-HTML gate — it must extend the recommended preset."""
-        cfg = json.loads((baked / ".html-validate.json").read_text())
+        cfg = json.loads((baked / ".htmlvalidate.json").read_text())
         extends = cfg.get("extends", [])
         assert any("html-validate:recommended" in item for item in extends)
 
@@ -199,6 +199,21 @@ class TestBakeDefaults:
         assert "docs/authoring.md" in readme
         assert "docs/verification.md" in readme
 
+    def test_readme_does_not_reproduce_adding_an_artifact_section(
+        self, baked: pathlib.Path
+    ) -> None:
+        """docs/authoring.md (§ 'Adding one') is the single source of truth for the homing flow; a one-paragraph duplicate in README forces every instance to rewrite it."""
+        readme = (baked / "README.md").read_text()
+        assert "## Adding an artifact" not in readme, (
+            "README.md must not ship a one-paragraph '## Adding an artifact' "
+            "section — the flow lives in docs/authoring.md (§ 'Adding one')"
+        )
+        authoring = (baked / "docs" / "authoring.md").read_text()
+        assert "## Adding one" in authoring, (
+            "docs/authoring.md must keep its '## Adding one' section — it's "
+            "the single source of truth after the README hoist"
+        )
+
     def test_gitignore_excludes_node_modules_and_build_output(
         self, baked: pathlib.Path
     ) -> None:
@@ -237,6 +252,74 @@ class TestBakeDefaults:
         text = changelog.read_text()
         assert "Keep a Changelog" in text
         assert "[Unreleased]" in text
+
+    def test_default_bake_keeps_generic_workbench_lead(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Inverse branch of the primary_artifact_slug conditional: when the variable is empty (the default), the generic 'A workbench for standalone HTML artifacts' lead must render and the INSTANCE-flavored 'Hosting **<title>**' opener must NOT leak through."""
+        readme = (baked / "README.md").read_text()
+        assert "A workbench for standalone HTML artifacts" in readme, (
+            "default bake must keep the generic multi-artifact lead — "
+            "without it, punches that don't name a canonical artifact "
+            "have no opening framing"
+        )
+        assert "Hosting **" not in readme, (
+            "default bake must not render the INSTANCE-flavored opener "
+            "that's scoped to punches with primary_artifact_slug set"
+        )
+
+
+class TestBakePrimaryArtifactSlug:
+    """Bake with a set primary_artifact_slug — the README opens with an INSTANCE-flavored block that names the canonical artifact and threads the slug into the deploy URL."""
+
+    @pytest.fixture(scope="class")
+    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("instance"),
+            extra_context={"primary_artifact_slug": "artemis-trail"},
+        )
+
+    @pytest.fixture(scope="class")
+    def single_word_baked(
+        self, tmp_path_factory: pytest.TempPathFactory
+    ) -> pathlib.Path:
+        return bake(
+            "artifact-bench",
+            tmp_path_factory.mktemp("instance-sw"),
+            extra_context={"primary_artifact_slug": "implode"},
+        )
+
+    def test_instance_opener_names_canonical_artifact(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Behavior: when primary_artifact_slug is set, the README opens with a 'Hosting **<title>** as the canonical artifact' line so a reader knows at a glance what the workbench hosts."""
+        readme = (baked / "README.md").read_text()
+        assert (
+            "Hosting **Artemis Trail** as the canonical artifact of this `artifact-bench` instance."
+            in readme
+        )
+
+    def test_instance_opener_propagates_slug_to_deploy_url(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Propagation: the slug must thread into the Play URL — without substitution every instance's opener would point at a placeholder path."""
+        readme = (baked / "README.md").read_text()
+        assert "Play: <https://gretyl.maplecrew.org/artemis-trail.html>" in readme
+
+    def test_instance_opener_replaces_generic_workbench_lead(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The instance opener and the generic lead must not coexist — two different framings at the top of the README contradict each other."""
+        readme = (baked / "README.md").read_text()
+        assert "A workbench for standalone HTML artifacts" not in readme
+
+    def test_title_derives_from_single_word_slug(
+        self, single_word_baked: pathlib.Path
+    ) -> None:
+        """Title derivation: a single-word slug like 'implode' must render as 'Implode' — title-case of the slug, no hyphen replacement needed. Proves the Jinja filter chain handles slugs without internal hyphens cleanly."""
+        readme = (single_word_baked / "README.md").read_text()
+        assert "Hosting **Implode**" in readme
 
 
 class TestBakeWithExample:
@@ -368,7 +451,7 @@ class TestBakeCustomContext:
                 "Makefile",
                 ".gitignore",
                 ".gitattributes",
-                ".html-validate.json",
+                ".htmlvalidate.json",
             }:
                 continue
             try:

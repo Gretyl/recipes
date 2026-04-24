@@ -15,13 +15,16 @@ rm -rf /tmp/ab-demo-default && /home/user/recipes/.venv/bin/cookiecutter /home/u
 fresh-artifacts/.gitattributes
 fresh-artifacts/.github/workflows/ci.yml
 fresh-artifacts/.gitignore
-fresh-artifacts/.html-validate.json
+fresh-artifacts/.htmlvalidate.json
+fresh-artifacts/AGENTS.md
 fresh-artifacts/CHANGELOG.md
+fresh-artifacts/CLAUDE.md
 fresh-artifacts/Makefile
 fresh-artifacts/README.md
 fresh-artifacts/docs/authoring.md
 fresh-artifacts/docs/manifest.yml
 fresh-artifacts/docs/verification.md
+fresh-artifacts/package-lock.json
 fresh-artifacts/package.json
 fresh-artifacts/public/.gitkeep
 fresh-artifacts/scripts/build.ts
@@ -82,9 +85,8 @@ cat /tmp/ab-demo-example/fresh-artifacts/.github/workflows/ci.yml
 # npm ci + make verify + make test-unit. No browser binaries — the
 # job completes in under a minute.
 #
-# End-to-end (browser) tests are deferred to v1.2 via a lightweight
-# rodney-based replacement. See cookbook/notes/artifact-bench.md
-# "Deferred work" for status.
+# End-to-end (browser) tests are deferred to a future release via a
+# lightweight rodney-based replacement.
 
 name: CI
 
@@ -138,5 +140,22 @@ grep -n "deploy_host\|gretyl.maplecrew.org" /tmp/ab-demo-default/fresh-artifacts
 ```output
 /tmp/ab-demo-default/fresh-artifacts/README.md:7:Deployed at <https://gretyl.maplecrew.org/>.
 /tmp/ab-demo-default/fresh-artifacts/README.md:22:`https://gretyl.maplecrew.org/foo.html`.
+/tmp/ab-demo-default/fresh-artifacts/README.md:53:`https://gretyl.maplecrew.org/<slug>.html`.
 /tmp/ab-demo-default/fresh-artifacts/docs/manifest.yml:4:# https://gretyl.maplecrew.org/<route>.
+```
+
+Setting the optional `primary_artifact_slug` swaps the generic workbench lead for an INSTANCE-flavored opener that names the canonical artifact and threads the slug through the deploy URL. Title derives from the slug via Jinja's built-in `replace`+`title` filter chain, so one variable is enough for a single-canonical-artifact instance:
+
+```bash
+rm -rf /tmp/ab-demo-instance && /home/user/recipes/.venv/bin/cookiecutter /home/user/recipes/cookbook/artifact-bench --no-input --output-dir /tmp/ab-demo-instance primary_artifact_slug=artemis-trail && sed -n "1,7p" /tmp/ab-demo-instance/fresh-artifacts/README.md
+```
+
+```output
+# Fresh Artifacts
+
+Hosting **Artemis Trail** as the canonical artifact of this `artifact-bench` instance.
+
+Play: <https://gretyl.maplecrew.org/artemis-trail.html>
+Gallery: <https://gretyl.maplecrew.org/>
+
 ```

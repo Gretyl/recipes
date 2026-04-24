@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `artifact-bench`: template now ships `AGENTS.md` (agent-only scope, per the convention IMPLODE's homing documented — no duplication of `docs/authoring.md` or `docs/verification.md`) and a `CLAUDE.md` delegation stub (`@AGENTS.md`), so every punch inherits the commit workflow, per-artifact-ledger pattern, and scope-discipline guidance without rediscovering them.
+- `artifact-bench`: template now ships `package-lock.json`, making `npm ci` succeed on first CI run instead of failing until an author locally regenerates and commits the lockfile.
+- `artifact-bench`: README now has a `## Publishing` section explicitly naming `make build` as the publish step, the byte-for-byte `src/<slug>/artifact.html → public/<slug>.html` identity, and the deploy URL. Both Artemis Trail and IMPLODE arrived at near-identical prose for this independently during their homings.
+- `artifact-bench`: new `primary_artifact_slug` cookiecutter variable (default empty). When set, the README opens with a `Hosting **<title>** as the canonical artifact...` block that names the canonical artifact and threads the slug into the deploy URL, replacing the generic multi-artifact lead. Empty default preserves the current generic framing. Title is derived from the slug via Jinja (`| replace('-', ' ') | title`), no second variable required.
+
+### Fixed
+
+- `artifact-bench`: renamed `.html-validate.json` → `.htmlvalidate.json`. html-validate 9.x auto-discovers the non-hyphenated name only, so the template's rule overrides (`require-sri: off`, `no-inline-style: off`, `no-trailing-whitespace: off`) were being silently ignored on every punch — `make verify-html` was actually enforcing the full `html-validate:recommended` ruleset. Also added `no-implicit-button-type: off` since Claude-produced `<button>` elements routinely omit explicit `type=`.
+- `artifact-bench`: `make test-unit` now tolerates an empty spec set (`passWithNoTests: true` in `vitest.config.ts`) — previously the Makefile gate failed whenever an artifact existed without tests, which is the explicit "add tests when a regression demands it" state `docs/verification.md` documents.
+- `artifact-bench`: `make verify-html` now short-circuits to `ok` when `src/` is empty instead of erroring on html-validate's "no files matching patterns" diagnostic. Companion to the vitest empty-tolerance fix above — a fresh punch with no artifacts is a legitimate green state.
+- `artifact-bench`: dropped the dead `cookbook/notes/artifact-bench.md` cross-reference from the baked README and `.github/workflows/ci.yml` header comment — that path exists in the Gretyl/recipes source repo, not in punched-out instances.
+- `artifact-bench`: hoisted the one-paragraph `## Adding an artifact` section out of the baked README into `docs/authoring.md` only (the section `## Adding one` there already holds the full flow). Both Artemis Trail and IMPLODE retuned or dropped this paragraph in their instance READMEs because the generic phrasing doesn't fit single-canonical-artifact instances.
+
+### Changed
+
+- `artifact-bench`: `.gitignore` now excludes `.claude/` so Claude Code's per-project session state doesn't leak into commits.
+
 ## [1.1.1] - 2026-04-19
 
 ### Fixed

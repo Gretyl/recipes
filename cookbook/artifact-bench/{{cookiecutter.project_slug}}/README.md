@@ -1,10 +1,17 @@
 # {{cookiecutter.project_name}}
 
+{% if cookiecutter.primary_artifact_slug -%}
+Hosting **{{ cookiecutter.primary_artifact_slug | replace('-', ' ') | title }}** as the canonical artifact of this `artifact-bench` instance.
+
+Play: <https://{{cookiecutter.deploy_host}}/{{cookiecutter.primary_artifact_slug}}.html>
+Gallery: <https://{{cookiecutter.deploy_host}}/>
+{%- else -%}
 A workbench for standalone HTML artifacts — the copy-pasteable
 single-file kind Claude produces — typed, tested, and iterated on
 without losing the property that makes them copy-pasteable.
 
 Deployed at <https://{{cookiecutter.deploy_host}}/>.
+{%- endif %}
 
 ## Layout
 
@@ -21,6 +28,9 @@ src/<artifact-slug>/
 becomes `public/foo.html`, served from
 `https://{{cookiecutter.deploy_host}}/foo.html`.
 
+See [docs/authoring.md](docs/authoring.md) for the full
+artifact-authoring flow.
+
 ## Quickstart
 
 ```bash
@@ -33,20 +43,24 @@ make ci        # verify && test && build
 
 Scope to one artifact: `make verify ARTIFACT=<slug>`.
 
-## Adding an artifact
-
-See [docs/authoring.md](docs/authoring.md). One-paragraph version:
-make a directory under `src/`, drop in `artifact.html`, write a
-`README.md` and `PROMPTS.md` next to it, add an entry to
-`docs/manifest.yml`. `make verify-structure` rejects an artifact
-that's missing the README or PROMPTS file.
-
 ## Verifying changes
 
 See [docs/verification.md](docs/verification.md). Two layers: fast
 static checks via `make verify`, runtime jsdom checks via
 `make test`. Add tests opt-in, the first time you catch a regression
 you wish you'd caught automatically.
+
+## Publishing
+
+`make build` is the publish step. It walks `src/<slug>/artifact.html`
+and copies each file into `public/<slug>.html` — byte-for-byte
+identical, no bundling, no minification — so the artifact file you
+author is the distributable you ship. Point your deploy target at the
+`public/` tree and each artifact serves from
+`https://{{cookiecutter.deploy_host}}/<slug>.html`.
+
+`public/` is gitignored; it's rebuilt on every `make build` and
+`make ci`. Anything you want in production goes under `src/`.
 {% if cookiecutter.include_github_workflows == "yes" %}
 ## CI
 
@@ -56,7 +70,7 @@ The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` t
 2. `make verify` — structure + types (tsc `--checkJs`) + html-validate
 3. `make test-unit` — vitest/jsdom unit specs
 
-No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement; see `cookbook/notes/artifact-bench.md` "Deferred work" for status.
+No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement.
 
 To run the same gate locally:
 
