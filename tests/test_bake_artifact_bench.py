@@ -199,6 +199,21 @@ class TestBakeDefaults:
         assert "docs/authoring.md" in readme
         assert "docs/verification.md" in readme
 
+    def test_readme_does_not_reproduce_adding_an_artifact_section(
+        self, baked: pathlib.Path
+    ) -> None:
+        """docs/authoring.md (§ 'Adding one') is the single source of truth for the homing flow; a one-paragraph duplicate in README forces every instance to rewrite it."""
+        readme = (baked / "README.md").read_text()
+        assert "## Adding an artifact" not in readme, (
+            "README.md must not ship a one-paragraph '## Adding an artifact' "
+            "section — the flow lives in docs/authoring.md (§ 'Adding one')"
+        )
+        authoring = (baked / "docs" / "authoring.md").read_text()
+        assert "## Adding one" in authoring, (
+            "docs/authoring.md must keep its '## Adding one' section — it's "
+            "the single source of truth after the README hoist"
+        )
+
     def test_gitignore_excludes_node_modules_and_build_output(
         self, baked: pathlib.Path
     ) -> None:
