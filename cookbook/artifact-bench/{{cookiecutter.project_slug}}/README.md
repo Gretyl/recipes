@@ -1,10 +1,17 @@
 # {{cookiecutter.project_name}}
 
+{% if cookiecutter.primary_artifact_slug -%}
+Hosting **{{ cookiecutter.primary_artifact_slug | replace('-', ' ') | title }}** as the canonical artifact of this `artifact-bench` instance.
+
+Play: <https://{{cookiecutter.deploy_host}}/{{cookiecutter.primary_artifact_slug}}.html>
+Gallery: <https://{{cookiecutter.deploy_host}}/>
+{%- else -%}
 A workbench for standalone HTML artifacts — the copy-pasteable
 single-file kind Claude produces — typed, tested, and iterated on
 without losing the property that makes them copy-pasteable.
 
 Deployed at <https://{{cookiecutter.deploy_host}}/>.
+{%- endif %}
 
 ## Layout
 
