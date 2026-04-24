@@ -3,3 +3,4 @@ public/
 .vitest/
 *.log
 .DS_Store
+.claude/
