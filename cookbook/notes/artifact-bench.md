@@ -48,6 +48,15 @@ The four pillars carried over from the proposal:
   workbench framing. Added because every single-canonical-artifact
   punch rewrote the generic lead into something instance-faithful;
   supplying the slug at punch time elides that rewrite.
+- **`include_github_workflows`** — yes/no list, defaulting to **`yes`**.
+  When `yes`, ships `.github/workflows/ci.yml` (the fast `npm ci +
+  make verify + make test-unit` gate) and the README's `## CI` section
+  with a Mermaid flowchart of the trigger-to-step path. When `no`,
+  the post-gen hook removes `.github/` entirely and the README's
+  `## CI` section is Jinja'd out. Default is `yes` because the
+  layered verification harness only earns its keep when CI actually
+  runs it — a punch that ships without CI loses most of the
+  template's value.
 
 ## Decisions and tradeoffs
 
