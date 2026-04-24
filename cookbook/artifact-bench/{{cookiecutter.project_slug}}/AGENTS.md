@@ -42,11 +42,6 @@ template files modified, artifact edits, deferred work, external
 dependencies — with enough context that a future session can tell
 intentional choices from drift.
 
-Two prior examples worth reading if you're writing your first ledger:
-the Artemis Trail and IMPLODE homings, preserved under
-`feedback/notes-*.md` in the Gretyl/recipes repo that sources this
-template.
-
 ## Scope discipline
 
 - **Don't add tests proactively.** Follow `docs/verification.md`'s

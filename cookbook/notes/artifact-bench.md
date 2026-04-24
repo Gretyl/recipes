@@ -35,6 +35,19 @@ The four pillars carried over from the proposal:
   deleting things. `yes` is for showcase bakes (demos,
   walkthroughs) where seeing the full layered loop on a working
   artifact matters.
+- **`primary_artifact_slug`** — optional slug of the instance's
+  canonical artifact (e.g., `artemis-trail`). Default **empty**. When
+  set, the README's lead paragraph is replaced with an
+  INSTANCE-flavored opener — `Hosting **<title>** as the canonical
+  artifact of this artifact-bench instance.` plus a `Play:` URL
+  threading the slug through `deploy_host` and a `Gallery:` URL at
+  the host root. The title derives from the slug via Jinja's
+  `| replace('-', ' ') | title` filter chain, so no second title
+  variable is required (`implode` → `Implode`, `artemis-trail` →
+  `Artemis Trail`). Leave empty for a generic multi-artifact
+  workbench framing. Added because every single-canonical-artifact
+  punch rewrote the generic lead into something instance-faithful;
+  supplying the slug at punch time elides that rewrite.
 
 ## Decisions and tradeoffs
 
