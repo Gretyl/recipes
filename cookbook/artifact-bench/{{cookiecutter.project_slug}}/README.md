@@ -47,6 +47,18 @@ See [docs/verification.md](docs/verification.md). Two layers: fast
 static checks via `make verify`, runtime jsdom checks via
 `make test`. Add tests opt-in, the first time you catch a regression
 you wish you'd caught automatically.
+
+## Publishing
+
+`make build` is the publish step. It walks `src/<slug>/artifact.html`
+and copies each file into `public/<slug>.html` — byte-for-byte
+identical, no bundling, no minification — so the artifact file you
+author is the distributable you ship. Point your deploy target at the
+`public/` tree and each artifact serves from
+`https://{{cookiecutter.deploy_host}}/<slug>.html`.
+
+`public/` is gitignored; it's rebuilt on every `make build` and
+`make ci`. Anything you want in production goes under `src/`.
 {% if cookiecutter.include_github_workflows == "yes" %}
 ## CI
 
@@ -56,7 +68,7 @@ The project ships with a GitHub Actions workflow at `.github/workflows/ci.yml` t
 2. `make verify` — structure + types (tsc `--checkJs`) + html-validate
 3. `make test-unit` — vitest/jsdom unit specs
 
-No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement; see `cookbook/notes/artifact-bench.md` "Deferred work" for status.
+No browser binaries — the job completes in under a minute. End-to-end (browser) tests are planned for a future release via a lightweight rodney-based replacement.
 
 To run the same gate locally:
 
