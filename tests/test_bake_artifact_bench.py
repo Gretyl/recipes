@@ -114,7 +114,7 @@ class TestBakeDefaults:
         self, baked: pathlib.Path
     ) -> None:
         """html-validate is the static-HTML gate — it must extend the recommended preset."""
-        cfg = json.loads((baked / ".html-validate.json").read_text())
+        cfg = json.loads((baked / ".htmlvalidate.json").read_text())
         extends = cfg.get("extends", [])
         assert any("html-validate:recommended" in item for item in extends)
 
@@ -368,7 +368,7 @@ class TestBakeCustomContext:
                 "Makefile",
                 ".gitignore",
                 ".gitattributes",
-                ".html-validate.json",
+                ".htmlvalidate.json",
             }:
                 continue
             try:
