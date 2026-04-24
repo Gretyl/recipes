@@ -21,6 +21,9 @@ src/<artifact-slug>/
 becomes `public/foo.html`, served from
 `https://{{cookiecutter.deploy_host}}/foo.html`.
 
+See [docs/authoring.md](docs/authoring.md) for the full
+artifact-authoring flow.
+
 ## Quickstart
 
 ```bash
@@ -32,14 +35,6 @@ make ci        # verify && test && build
 ```
 
 Scope to one artifact: `make verify ARTIFACT=<slug>`.
-
-## Adding an artifact
-
-See [docs/authoring.md](docs/authoring.md). One-paragraph version:
-make a directory under `src/`, drop in `artifact.html`, write a
-`README.md` and `PROMPTS.md` next to it, add an entry to
-`docs/manifest.yml`. `make verify-structure` rejects an artifact
-that's missing the README or PROMPTS file.
 
 ## Verifying changes
 
