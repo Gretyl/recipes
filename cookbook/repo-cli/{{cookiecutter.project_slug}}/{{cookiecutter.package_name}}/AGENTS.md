@@ -126,6 +126,20 @@ example:
 
 After making CLI changes, run `uvx showboat --help` and use showboat to update `USAGE.md`.
 
+## Commit Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) on the subject line:
+
+```
+<type>(<scope>): <short summary>
+```
+
+Allowed **types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`.
+
+Suggested **scopes** for this project: `cli` (the `{{cookiecutter.package_name}}/` package), `tests`, `docs`, `deps`. Omit the scope for cross-cutting changes that span multiple areas.
+
+Tests and the implementation they drive land as **separate commits** so the red→green transition is observable in `git log`.
+
 ## Pull Request Conventions
 
 When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. Write the **PR body** as a narrative summary of what changed and why — not a commit list. GitHub already surfaces the full commit log; duplicating it in the body is noise during review.
