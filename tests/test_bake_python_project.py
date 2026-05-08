@@ -159,6 +159,19 @@ class TestBakeDefaults:
         assert "narrative" in agents.lower()
         assert "not a commit list" in agents.lower()
 
+    def test_agents_md_documents_conventional_commits(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Baked AGENTS.md must name the Conventional Commits convention and
+        list the parent repo's allowed types so a fresh punch doesn't have to
+        chase the convention upstream."""
+        agents = (baked / "AGENTS.md").read_text()
+        assert "Conventional Commits" in agents
+        for commit_type in ("feat", "fix", "test", "docs", "chore", "refactor"):
+            assert f"`{commit_type}`" in agents, (
+                f"AGENTS.md must list {commit_type!r} as a commit type"
+            )
+
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
         assert "fresh_project" in tree
