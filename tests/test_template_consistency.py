@@ -152,9 +152,7 @@ class TestAgentsAndClaudeMdParity:
         claude_target: str,
     ) -> None:
         baked = bake(template, tmp_path)
-        assert (baked / agents_path).is_file(), (
-            f"{template} bake missing {agents_path}"
-        )
+        assert (baked / agents_path).is_file(), f"{template} bake missing {agents_path}"
         claude = baked / "CLAUDE.md"
         assert claude.is_file(), f"{template} bake missing CLAUDE.md"
         assert claude.read_text() == claude_target, (

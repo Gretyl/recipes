@@ -148,9 +148,7 @@ class TestBakeDefaults:
         assert claude.is_file()
         assert claude.read_text() == "@AGENTS.md\n"
 
-    def test_agents_md_pr_convention_is_narrative(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_agents_md_pr_convention_is_narrative(self, baked: pathlib.Path) -> None:
         """Baked AGENTS.md must mirror the parent repo's narrative-PR-body
         convention. The earlier "List all commits in-order as the PR body"
         wording contradicted /AGENTS.md and is forbidden."""
