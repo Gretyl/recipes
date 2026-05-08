@@ -1,0 +1,86 @@
+:: __ChoiceFictionCribSheet [info]
+Pure choice-based branching prose, in the lineage of recent IFComp
+and Spring Thing winners. No resources, no clicker loop — passages
+of writing connected by `[[Display|Target]]` links, with optional
+inline conditionals to track flags.
+
+Drop the `CF_` prefix when you copy these into src/.
+
+
+:: CF_Start
+<<set $saw_window to false>>\
+<<set $kept_letter to false>>\
+
+The kitchen smells of cold tea. The radio is on, low. There is a letter on the counter, folded twice.
+
+You can [[read the letter|CF_Letter]] or [[ignore it|CF_Window]] and look out the window.
+
+
+:: CF_Letter
+The letter is from your sister. It is short, and it is cruel, and it does not say what you wanted it to say.
+
+<<button "fold it again, and put it back">>\
+<<set $kept_letter to true>>\
+<<replace "#choices">>\
+You [[walk to the window|CF_Window]].
+<</replace>>\
+<</button>>
+
+<<button "tear it">>\
+<<replace "#choices">>\
+You [[walk to the window|CF_Window]] with cold hands.
+<</replace>>\
+<</button>>
+
+<div id="choices"></div>
+
+
+:: CF_Window
+<<set $saw_window to true>>\
+
+The yard is empty in the way only April yards can be. There is a shape in the grass that might be a coat or might be nothing.
+
+<<if $kept_letter>>\
+You think of the letter, folded in your pocket.
+<<else>>\
+You think of nothing in particular.
+<</if>>
+
+[[Go outside|CF_Yard]]
+[[Stay where you are|CF_Stay]]
+
+
+:: CF_Yard
+The shape is a coat. It is your sister's coat.
+
+(end.)
+
+[[Restart|CF_Start]]
+
+
+:: CF_Stay
+You stay. The radio plays through to the next song.
+
+(end.)
+
+[[Restart|CF_Start]]
+
+
+:: __ChoiceFiction_Notes
+Three primitives at work here:
+
+  1. **Branching links** — `[[Display|Target]]` forms the spine of
+     the story. Choices in IFComp pieces tend to be flavour-rich
+     in their *display* text and quietly different in their
+     *targets* — the player rarely realises a choice mattered until
+     two passages later.
+  2. **Flag variables** ($saw_window, $kept_letter) — booleans set
+     in one passage and read in another via `<<if>>`. Lets the
+     prose acknowledge what the player did without the player
+     seeing a stat panel.
+  3. **Replace-in-place choices** — clicking a `<<button>>` swaps
+     a region's content via `<<replace>>` rather than navigating
+     away. Useful when you want a beat to land before transitioning.
+
+For interactive numerical mechanics, mix in patterns from
+paperclips.twee. For terse poetic logs, mix in dark-room.twee.

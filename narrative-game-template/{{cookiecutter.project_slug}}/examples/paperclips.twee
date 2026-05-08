@@ -1,0 +1,94 @@
+:: __PaperclipsCribSheet [info]
+A numerical clicker in the lineage of Universal Paperclips (Frank
+Lantz). Pattern: a single resource that escalates through
+multipliers, cooldowns to slow early game and force pacing,
+upgrades purchased with the resource, and a prestige passage that
+resets state with a permanent multiplier.
+
+Drop the `PC_` prefix when you copy these into src/.
+
+
+:: PC_Start
+<<set $clips to 0>>\
+<<set $multiplier to 1>>\
+<<set $prestige to 0>>\
+<<set $autoclip to false>>\
+
+You make paperclips. You sell paperclips. There is no other purpose.
+
+<<button "make a paperclip">>\
+<<set $clips += $multiplier>>\
+<<replace "#stats">><<include "PC_Stats">><</replace>>\
+<<replace "#shop">><<include "PC_Shop">><</replace>>\
+<</button>>
+
+<div id="stats"><<include "PC_Stats">></div>
+
+<div id="shop"><<include "PC_Shop">></div>
+
+<<timed 1s t8n>>\
+<<if $autoclip>>\
+<<set $clips += $multiplier>>\
+<<replace "#stats">><<include "PC_Stats">><</replace>>\
+<</if>>\
+<</timed>>
+
+
+:: PC_Stats
+clips: <<print $clips>>  ·  multiplier: ×<<print $multiplier>>  ·  prestige: <<print $prestige>>
+
+
+:: PC_Shop
+<<if $clips gte 10>>\
+<<button "upgrade die [10 clips, +1 multiplier]">>\
+<<set $clips -= 10>>\
+<<set $multiplier++>>\
+<<replace "#stats">><<include "PC_Stats">><</replace>>\
+<<replace "#shop">><<include "PC_Shop">><</replace>>\
+<</button>>\
+<</if>>
+
+<<if $clips gte 50 and not $autoclip>>\
+<<button "AutoClippers [50 clips, +1 clip/sec]">>\
+<<set $clips -= 50>>\
+<<set $autoclip to true>>\
+<<replace "#stats">><<include "PC_Stats">><</replace>>\
+<<replace "#shop">><<include "PC_Shop">><</replace>>\
+<</button>>\
+<</if>>
+
+<<if $clips gte 1000>>\
+[[Reset for prestige|PC_Prestige]]\
+<</if>>
+
+
+:: PC_Prestige
+You reset everything. The factory is dust. You start over with a permanent ×2 multiplier.
+
+<<set $prestige++>>\
+<<set $clips to 0>>\
+<<set $multiplier to 2 ** $prestige>>\
+<<set $autoclip to false>>\
+
+[[Begin again|PC_Start]]
+
+
+:: __Paperclips_Notes
+Five primitives at work here:
+
+  1. **Cooldown / auto-tick** (`<<timed 1s>>`) — a recurring tick
+     loop that fires every second. SugarCube's `<<timed>>` accepts
+     `t8n` to fade transitions in and out.
+  2. **Conditional shop offers** — buttons appear only when the
+     player can afford them. Avoids cluttering the early UI.
+  3. **Upgrade purchase** — a button that decrements the resource
+     and increments a multiplier or unlocks new behaviour.
+  4. **Auto-clipper / passive income** — the `$autoclip` flag is
+     read by the `<<timed>>` tick; once set, the resource grows
+     without player input.
+  5. **Prestige reset** — a passage that wipes state, preserves
+     a `$prestige` counter, and seeds the multiplier from it
+     (`2 ** $prestige`). The classic incremental-game ratchet.
+
+If you want a poetic notification log instead of pure numbers,
+mix in the $log array pattern from dark-room.twee.

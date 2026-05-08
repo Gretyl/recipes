@@ -1,0 +1,23 @@
+[project]
+name = "narrative-game-template"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Cookiecutter template for Twine narrative games"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0",
+    "cookiecutter>=2.5",
+]
+dev = [
+    "showboat",
+    "chartroom",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "network: requires network access (tweego download, etc.); gated by TWEEGO_NETWORK_TESTS=1",
+    "browser: requires headless Chrome via rodney",
+]

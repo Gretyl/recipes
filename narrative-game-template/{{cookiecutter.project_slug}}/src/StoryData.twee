@@ -1,0 +1,7 @@
+:: StoryData
+{
+  "ifid": "{{ cookiecutter.ifid }}",
+  "format": "{{ cookiecutter._format_proper[cookiecutter.story_format] }}",
+  "start": "Start",
+  "zoom": 1
+}
