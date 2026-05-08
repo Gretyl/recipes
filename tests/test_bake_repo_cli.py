@@ -137,6 +137,18 @@ def test_agents_md_pr_convention_is_narrative(baked: pathlib.Path) -> None:
     assert "not a commit list" in agents.lower()
 
 
+def test_agents_md_documents_conventional_commits(baked: pathlib.Path) -> None:
+    """Baked AGENTS.md must name the Conventional Commits convention and list
+    the parent repo's allowed types so a fresh punch doesn't have to chase
+    the convention upstream."""
+    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
+    assert "Conventional Commits" in agents
+    for commit_type in ("feat", "fix", "test", "docs", "chore", "refactor"):
+        assert f"`{commit_type}`" in agents, (
+            f"AGENTS.md must list {commit_type!r} as a commit type"
+        )
+
+
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
     for p in baked.rglob("*"):
