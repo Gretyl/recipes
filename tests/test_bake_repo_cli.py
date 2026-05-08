@@ -127,6 +127,16 @@ def test_claude_md_delegates_to_package_agents(baked: pathlib.Path) -> None:
     assert claude.read_text() == "@demo_repo_cli/AGENTS.md\n"
 
 
+def test_agents_md_pr_convention_is_narrative(baked: pathlib.Path) -> None:
+    """Baked AGENTS.md must mirror the parent repo's narrative-PR-body
+    convention. The earlier "List all commits in-order as the PR body"
+    wording contradicted /AGENTS.md and is forbidden."""
+    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
+    assert "List all commits in-order as the PR body" not in agents
+    assert "narrative" in agents.lower()
+    assert "not a commit list" in agents.lower()
+
+
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
     for p in baked.rglob("*"):
