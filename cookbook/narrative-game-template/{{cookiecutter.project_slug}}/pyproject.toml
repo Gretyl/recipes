@@ -3,7 +3,7 @@ name = "{{ cookiecutter.project_slug }}"
 version = "0.1.0"
 description = "{{ cookiecutter.title }} — a Twine narrative game"
 authors = [{name = "{{ cookiecutter.author_name }}"}]
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0"]
