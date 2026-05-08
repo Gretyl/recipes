@@ -7,6 +7,10 @@ and repo-cli templates.
 
 import pathlib
 
+import pytest
+
+from tests.helpers import bake
+
 COOKBOOK = pathlib.Path(__file__).parent.parent / "cookbook"
 PP_PYPROJECT = (
     COOKBOOK / "python-project" / "{{cookiecutter.project_slug}}" / "pyproject.toml"
@@ -116,3 +120,44 @@ class TestDependencyMatch:
         ]:
             text = path.read_text()
             assert '"pydantic"' in text, f"{name} missing pydantic dependency"
+
+
+class TestAgentsAndClaudeMdParity:
+    """Sweep invariant: every cookbook template must bake an AGENTS.md and a
+    CLAUDE.md sibling delegation stub so both filenames resolve to the same
+    guidance.
+
+    Lands green-on-arrival as the sweep guard for the per-template red→green
+    pairs that introduced the stubs:
+
+      - python-project: e5015c8 / f39cd86
+      - repo-cli:       c6cae2a / 9504eab
+
+    artifact-bench already shipped both files (CHANGELOG [Unreleased]).
+    """
+
+    @pytest.mark.parametrize(
+        ("template", "agents_path", "claude_target"),
+        [
+            ("python-project", "AGENTS.md", "@AGENTS.md\n"),
+            ("repo-cli", "my_repo_cli/AGENTS.md", "@my_repo_cli/AGENTS.md\n"),
+            ("artifact-bench", "AGENTS.md", "@AGENTS.md\n"),
+        ],
+    )
+    def test_baked_output_ships_agents_and_claude_md(
+        self,
+        tmp_path: pathlib.Path,
+        template: str,
+        agents_path: str,
+        claude_target: str,
+    ) -> None:
+        baked = bake(template, tmp_path)
+        assert (baked / agents_path).is_file(), (
+            f"{template} bake missing {agents_path}"
+        )
+        claude = baked / "CLAUDE.md"
+        assert claude.is_file(), f"{template} bake missing CLAUDE.md"
+        assert claude.read_text() == claude_target, (
+            f"{template} CLAUDE.md must be {claude_target!r}, "
+            f"got {claude.read_text()!r}"
+        )
