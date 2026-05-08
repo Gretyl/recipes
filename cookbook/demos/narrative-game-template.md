@@ -1,21 +1,16 @@
 # narrative-game-template walkthrough
 
-*2026-04-29T01:11:51Z by Showboat 0.6.1*
-<!-- showboat-id: 1fbbb1a1-ecfa-4436-8b7c-bdb5789339f1 -->
-
 A single cookiecutter template that scaffolds a **Twine 3 narrative game**, compiled to a self-contained HTML by the [`tweego`](https://www.motoslave.net/tweego/) Go binary. The template ships with example crib-sheets for three opinionated forms — *A Dark Room*-style found-UI clickers, *Universal Paperclips*-style numerical clickers, and IFComp-style choice fiction — and verifies its output end-to-end via headless Chrome through `rodney`.
-
-This document is built and re-verified by [showboat](https://github.com/Gretyl/showboat); display-only Twine snippets use HTML `<pre><code>` so they round-trip cleanly through `showboat verify`.
 
 ## What the default bake renders
 
 A no-input bake drops a complete Twee 3 project into the working directory. After `make setup-twine && make dist`, the resulting `dist/index.html` looks like this in headless Chrome:
 
 ```bash {image}
-![Default bake — An Untitled Room rendered by SugarCube](charts/default_bake_screenshot.png)
+![Default bake — An Untitled Room rendered by SugarCube](images/default_bake_screenshot.png)
 ```
 
-![Default bake — An Untitled Room rendered by SugarCube](charts/default_bake_screenshot.png)
+![Default bake — An Untitled Room rendered by SugarCube](images/default_bake_screenshot.png)
 
 The diegetic dim background, the monospaced narrow column, and the single `[[Wait]]` link are the *starting marks* the template ships — not commitments. The `StoryStylesheet.twee` passage is meant to be edited freely.
 
@@ -28,10 +23,10 @@ The same skeleton, extended with the SugarCube macros catalogued in `examples/`,
 Resource pool, action button, append-only poetic log.
 
 ```bash {image}
-![Dark-room form](charts/example_dark-room.png)
+![Dark-room form](images/example_dark-room.png)
 ```
 
-![Dark-room form](charts/example_dark-room.png)
+![Dark-room form](images/example_dark-room.png)
 
 <pre><code>:: Start
 &lt;&lt;set $wood to 0&gt;&gt;
@@ -58,10 +53,10 @@ You stand in the dark. There is a pile of damp logs by the door.
 Resource + multiplier + auto-tick + prestige reset.
 
 ```bash {image}
-![Paperclips form](charts/example_paperclips.png)
+![Paperclips form](images/example_paperclips.png)
 ```
 
-![Paperclips form](charts/example_paperclips.png)
+![Paperclips form](images/example_paperclips.png)
 
 <pre><code>:: Start
 &lt;&lt;set $clips to 0&gt;&gt;
@@ -87,10 +82,10 @@ You make paperclips. You sell paperclips. There is no other purpose.
 `[[Display|Target]]` links, flag variables, in-place beats.
 
 ```bash {image}
-![Choice-fiction form](charts/example_choice-fiction.png)
+![Choice-fiction form](images/example_choice-fiction.png)
 ```
 
-![Choice-fiction form](charts/example_choice-fiction.png)
+![Choice-fiction form](images/example_choice-fiction.png)
 
 <pre><code>:: Start
 &lt;&lt;set $kept_letter to false&gt;&gt;
@@ -109,20 +104,20 @@ ranges from sparse (Snowman, two of seven) to comprehensive
 (SugarCube, seven of seven), with Harlowe and Chapbook in between:
 
 ```bash {image}
-![Twine 2 story-format feature support](charts/story_format_tradeoffs.png)
+![Twine 2 story-format feature support](images/story_format_tradeoffs.png)
 ```
 
-![Twine 2 story-format feature support](charts/story_format_tradeoffs.png)
+![Twine 2 story-format feature support](images/story_format_tradeoffs.png)
 
 SugarCube is the cookiecutter default because it has macros for all eight mechanical primitives the three reference forms lean on (resource pool, action button, cooldown, event interrupt, upgrade, passage transition, log append, prestige) — so a single project tree can express any point in the form-spectrum without scaffolding three separate skeletons.
 
 The expressive ceiling per form, by primitive count:
 
 ```bash {image}
-![Mechanical primitives used by each form](charts/form_macro_coverage.png)
+![Mechanical primitives used by each form](images/form_macro_coverage.png)
 ```
 
-![Mechanical primitives used by each form](charts/form_macro_coverage.png)
+![Mechanical primitives used by each form](images/form_macro_coverage.png)
 
 A pure choice-fiction story uses ~3 primitives; a paperclips-style clicker uses all 8. SugarCube covers the union.
 
@@ -153,7 +148,7 @@ cat cookiecutter.json
 
 Once baked, the project ships a Makefile with `make test` as the single pre-commit gate per Gretyl/recipes cookbook convention. Three commands take a fresh bake to a verified build:
 
-<pre><code>cookiecutter narrative-game-template/        # baked into ./my-narrative
+<pre><code>cookiecutter cookbook/narrative-game-template/   # baked into ./my-narrative
 cd my-narrative
 
 make setup-twine    # downloads tweego 2.1.1 into .tweego/ (one-time)
@@ -190,21 +185,3 @@ The baked project tree:
     └── test_smoke.py              # rodney browser drive
 </code></pre>
 
-## TDD round summary
-
-The upstream `narrative-game-template/` working in grimoire shipped this template through nine numbered TDD rounds:
-
-  1. cookiecutter.json prompts — RED + GREEN
-  2. source-passage skeleton — RED + GREEN
-  3. build harness (Makefile + install script + tests) — RED + GREEN
-  4. pre_gen_project rejects bad slugs — RED + GREEN
-  5. blank IFID synthesises a UUID4 in StoryData — RED + GREEN
-  6. StoryData parses across all four story-format choices — test-after
-  7. setup-twine downloads working tweego — RED + GREEN, network-gated
-  8. make dist compiles src/* into dist/index.html — test-after, network-gated
-  9. rodney browser smoke + end-to-end baked pipeline gate — test-after, network-gated
-
-Round 7 was a real RED: the round 3 install script ended with `"$BIN" -v` to print the version, but tweego's `-v` flag exits 1 (informational, not error), and `set -e` propagated that into the script's exit code. The round 7 GREEN swallowed the `tweego -v` return value with `|| true`.
-
-Default suite (no network): **58 passed + 12 skipped**.
-With `TWEEGO_NETWORK_TESTS=1`: **70 passed**.
