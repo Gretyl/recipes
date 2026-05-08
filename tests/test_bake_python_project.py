@@ -138,6 +138,16 @@ class TestBakeDefaults:
     def test_gitattributes_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".gitattributes").is_file()
 
+    def test_agents_md_exists(self, baked: pathlib.Path) -> None:
+        assert (baked / "AGENTS.md").is_file()
+
+    def test_claude_md_delegates_to_agents(self, baked: pathlib.Path) -> None:
+        """CLAUDE.md is a one-line delegation stub so both filenames resolve
+        to the same guidance."""
+        claude = baked / "CLAUDE.md"
+        assert claude.is_file()
+        assert claude.read_text() == "@AGENTS.md\n"
+
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
         assert "fresh_project" in tree
@@ -154,6 +164,8 @@ class TestBakeDefaults:
         assert ".envrc" in tree
         assert ".gitattributes" in tree
         assert ".gitignore" in tree
+        assert "AGENTS.md" in tree
+        assert "CLAUDE.md" in tree
 
     def test_no_raw_template_variables(self, baked: pathlib.Path) -> None:
         """No file should contain un-rendered cookiecutter variables."""
