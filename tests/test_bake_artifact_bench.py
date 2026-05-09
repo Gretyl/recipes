@@ -176,6 +176,21 @@ class TestBakeDefaults:
         assert (baked / "docs" / "authoring.md").is_file()
         assert (baked / "docs" / "verification.md").is_file()
 
+    def test_agents_md_documents_punch_knobs(self, baked: pathlib.Path) -> None:
+        """Baked AGENTS.md must name the three cookiecutter variables that
+        govern integration commitments (`primary_artifact_slug`,
+        `include_example_artifact`, `include_github_workflows`) so a fresh
+        punch knows which knobs are baked-in vs. runtime config."""
+        agents = (baked / "AGENTS.md").read_text()
+        for knob in (
+            "primary_artifact_slug",
+            "include_example_artifact",
+            "include_github_workflows",
+        ):
+            assert knob in agents, (
+                f"AGENTS.md must name punch knob {knob!r}"
+            )
+
     def test_manifest_yml_references_deploy_host(self, baked: pathlib.Path) -> None:
         """gallery.ts reads docs/manifest.yml; the example route must use deploy_host so users see how to fill it in."""
         manifest = (baked / "docs" / "manifest.yml").read_text()
