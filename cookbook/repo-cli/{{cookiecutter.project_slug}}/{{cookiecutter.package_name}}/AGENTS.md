@@ -35,6 +35,10 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group via `cli.add_command()`
 - **Rich/Textual stubs:** `status.py` and `dashboard.py` are starter modules demonstrating Rich console output and Textual TUI apps. Both are available as dev dependencies — extend or replace them as the project grows.
 
+### Cog blocks in README.md
+
+The baked `README.md` contains `<!--[[[cog ... ]]] ... [[[end]]]-->` blocks that `.github/workflows/update-readme.yml` regenerates by running `cog -r README.md` on every push to `main`. **Edits inside a Cog block are silently overwritten on the next push.** To change generated content, edit the template code in `{{cookiecutter.package_name}}/tui/template.py` (the `template apply` and `template prepare` subcommands manage the lifecycle); content *outside* the Cog delimiters is hand-edited as normal.
+
 ## Development standards
 
 Every CLI subcommand — both new proposals and pre-existing commands — must satisfy three requirements:
