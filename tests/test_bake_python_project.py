@@ -170,9 +170,7 @@ class TestBakeDefaults:
                 f"AGENTS.md must list {commit_type!r} as a commit type"
             )
 
-    def test_agents_md_documents_release_sequence(
-        self, baked: pathlib.Path
-    ) -> None:
+    def test_agents_md_documents_release_sequence(self, baked: pathlib.Path) -> None:
         """Baked AGENTS.md must condense /AGENTS.md § Distribution so a fresh
         punch knows the release order: the lockfile must be regenerated
         *before* the release commit, the tag must be annotated, and `make

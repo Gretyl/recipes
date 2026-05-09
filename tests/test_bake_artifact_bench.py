@@ -187,9 +187,7 @@ class TestBakeDefaults:
             "include_example_artifact",
             "include_github_workflows",
         ):
-            assert knob in agents, (
-                f"AGENTS.md must name punch knob {knob!r}"
-            )
+            assert knob in agents, f"AGENTS.md must name punch knob {knob!r}"
 
     def test_manifest_yml_references_deploy_host(self, baked: pathlib.Path) -> None:
         """gallery.ts reads docs/manifest.yml; the example route must use deploy_host so users see how to fill it in."""
