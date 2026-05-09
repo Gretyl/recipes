@@ -170,6 +170,20 @@ class TestBakeDefaults:
                 f"AGENTS.md must list {commit_type!r} as a commit type"
             )
 
+    def test_agents_md_documents_release_sequence(
+        self, baked: pathlib.Path
+    ) -> None:
+        """Baked AGENTS.md must condense /AGENTS.md § Distribution so a fresh
+        punch knows the release order: the lockfile must be regenerated
+        *before* the release commit, the tag must be annotated, and `make
+        dist` is the validation gate."""
+        agents = (baked / "AGENTS.md").read_text()
+        assert "Release" in agents
+        for landmark in ("uv sync", "annotated", "make dist", "CHANGELOG.md"):
+            assert landmark in agents, (
+                f"AGENTS.md release section must name {landmark!r}"
+            )
+
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
         assert "fresh_project" in tree
