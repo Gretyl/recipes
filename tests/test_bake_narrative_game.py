@@ -421,53 +421,51 @@ class TestBakePerStoryFormat:
     """Each story_format choice yields a parseable StoryData with the
     canonical Twine name (not the lowercase prompt value)."""
 
-    @pytest.mark.parametrize("choice,canonical", FORMAT_MAPPING)
-    def test_format_mapping_to_canonical_name(
+    @pytest.fixture(
+        scope="class",
+        params=[
+            pytest.param(("sugarcube", "SugarCube"), id="sugarcube"),
+            pytest.param(("harlowe", "Harlowe"), id="harlowe"),
+            pytest.param(("chapbook", "Chapbook"), id="chapbook"),
+            pytest.param(("snowman", "Snowman"), id="snowman"),
+        ],
+    )
+    def baked_per_format(
         self,
-        choice: str,
-        canonical: str,
+        request: pytest.FixtureRequest,
         tmp_path_factory: pytest.TempPathFactory,
-    ) -> None:
+    ) -> tuple[pathlib.Path, str, str]:
+        choice, canonical = request.param
         baked = bake(
             TEMPLATE_NAME,
             tmp_path_factory.mktemp(f"format-{choice}"),
             extra_context={"story_format": choice},
         )
+        return baked, choice, canonical
+
+    def test_format_mapping_to_canonical_name(
+        self, baked_per_format: tuple[pathlib.Path, str, str]
+    ) -> None:
+        baked, choice, canonical = baked_per_format
         data = _parse_storydata(baked)
         assert data["format"] == canonical, (
             f"{choice!r} should render as {canonical!r}, got {data['format']!r}"
         )
 
-    @pytest.mark.parametrize("choice,_canonical", FORMAT_MAPPING)
     def test_storydata_json_well_formed(
-        self,
-        choice: str,
-        _canonical: str,
-        tmp_path_factory: pytest.TempPathFactory,
+        self, baked_per_format: tuple[pathlib.Path, str, str]
     ) -> None:
-        baked = bake(
-            TEMPLATE_NAME,
-            tmp_path_factory.mktemp(f"format-{choice}-json"),
-            extra_context={"story_format": choice},
-        )
+        baked, _choice, _canonical = baked_per_format
         data = _parse_storydata(baked)
         assert isinstance(data, dict)
         assert "ifid" in data
         assert "format" in data
         assert "start" in data
 
-    @pytest.mark.parametrize("choice,_canonical", FORMAT_MAPPING)
     def test_storydata_ifid_is_uuid4(
-        self,
-        choice: str,
-        _canonical: str,
-        tmp_path_factory: pytest.TempPathFactory,
+        self, baked_per_format: tuple[pathlib.Path, str, str]
     ) -> None:
-        baked = bake(
-            TEMPLATE_NAME,
-            tmp_path_factory.mktemp(f"format-{choice}-uuid"),
-            extra_context={"story_format": choice},
-        )
+        baked, _choice, _canonical = baked_per_format
         data = _parse_storydata(baked)
         ifid = data["ifid"]
         assert isinstance(ifid, str) and UUID4_RE.match(ifid), (
@@ -492,32 +490,33 @@ class TestBakedSmokeSelectorsAreFormatAware:
 
     EXPECTED_SELECTORS = [
         pytest.param(
-            "sugarcube",
-            "#passages .passage",
-            "#passages a.link-internal",
+            ("sugarcube", "#passages .passage", "#passages a.link-internal"),
             id="sugarcube",
         ),
-        pytest.param("harlowe", "tw-passage", "tw-link", id="harlowe"),
-        pytest.param("chapbook", ".page", ".page a", id="chapbook"),
-        pytest.param("snowman", "#story", "#story a", id="snowman"),
+        pytest.param(("harlowe", "tw-passage", "tw-link"), id="harlowe"),
+        pytest.param(("chapbook", ".page", ".page a"), id="chapbook"),
+        pytest.param(("snowman", "#story", "#story a"), id="snowman"),
     ]
 
-    @pytest.mark.parametrize(
-        "story_format,passage_selector,link_selector", EXPECTED_SELECTORS
-    )
-    def test_baked_smoke_carries_format_specific_passage_selector(
+    @pytest.fixture(scope="class", params=EXPECTED_SELECTORS)
+    def baked_smoke(
         self,
-        story_format: str,
-        passage_selector: str,
-        link_selector: str,
+        request: pytest.FixtureRequest,
         tmp_path_factory: pytest.TempPathFactory,
-    ) -> None:
+    ) -> tuple[str, str, str, str]:
+        story_format, passage_selector, link_selector = request.param
         baked = bake(
             TEMPLATE_NAME,
             tmp_path_factory.mktemp(f"smoke-sel-{story_format}"),
             extra_context={"story_format": story_format},
         )
         smoke = (baked / "tests" / "test_smoke.py").read_text()
+        return story_format, passage_selector, link_selector, smoke
+
+    def test_baked_smoke_carries_format_specific_passage_selector(
+        self, baked_smoke: tuple[str, str, str, str]
+    ) -> None:
+        story_format, passage_selector, link_selector, smoke = baked_smoke
         assert f'PASSAGE_SELECTOR = "{passage_selector}"' in smoke, (
             f"expected PASSAGE_SELECTOR = {passage_selector!r} for "
             f"story_format={story_format!r}, but the baked smoke does not "
@@ -530,33 +529,21 @@ class TestBakedSmokeSelectorsAreFormatAware:
             f"carry that selector."
         )
 
-    @pytest.mark.parametrize(
-        "story_format,passage_selector,_link_selector", EXPECTED_SELECTORS
-    )
     def test_baked_smoke_does_not_leak_other_formats_selectors(
-        self,
-        story_format: str,
-        passage_selector: str,
-        _link_selector: str,
-        tmp_path_factory: pytest.TempPathFactory,
+        self, baked_smoke: tuple[str, str, str, str]
     ) -> None:
         """Inverse-branch sweep: a Harlowe bake must not carry SugarCube's
         `.link-internal` constant, a Chapbook bake must not carry
         `<tw-passage>`, etc. Without this guard, a Jinja conditional that
         falls through silently could ship selectors from the wrong format
         even while the assertion above passes."""
+        story_format, _passage_selector, _link_selector, smoke = baked_smoke
         other_format_markers = {
             "sugarcube": ["link-internal", "#passages"],
             "harlowe": ["tw-passage", "tw-link"],
             "chapbook": ['".page"'],
             "snowman": ['"#story"'],
         }
-        baked = bake(
-            TEMPLATE_NAME,
-            tmp_path_factory.mktemp(f"smoke-leak-{story_format}"),
-            extra_context={"story_format": story_format},
-        )
-        smoke = (baked / "tests" / "test_smoke.py").read_text()
         # Strip the docstring's selector-swap reference table; the leak
         # check is about live code, not commentary.
         body = smoke.split('"""', 2)[-1] if smoke.count('"""') >= 2 else smoke
