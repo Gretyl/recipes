@@ -475,6 +475,102 @@ class TestBakePerStoryFormat:
         )
 
 
+class TestBakedSmokeSelectorsAreFormatAware:
+    """The baked `tests/test_smoke.py` carries the right DOM selectors
+    for the chosen story_format.
+
+    SugarCube renders passages as `#passages .passage[data-passage]` with
+    internal links classed `a.link-internal`; Harlowe uses `<tw-passage>`
+    with `<tw-link>` elements; Chapbook uses a `.page` container with
+    plain `<a>` links; Snowman uses `#story` with plain `<a>` links. A
+    smoke file that hardcodes one format's selectors greens or reds
+    against the wrong DOM when a downstream user picks any other
+    format — every assertion either misses the element entirely
+    (silent skip) or matches a wholly different element (false-positive
+    pass / false-negative fail).
+    """
+
+    EXPECTED_SELECTORS = [
+        pytest.param(
+            "sugarcube",
+            "#passages .passage",
+            "#passages a.link-internal",
+            id="sugarcube",
+        ),
+        pytest.param("harlowe", "tw-passage", "tw-link", id="harlowe"),
+        pytest.param("chapbook", ".page", ".page a", id="chapbook"),
+        pytest.param("snowman", "#story", "#story a", id="snowman"),
+    ]
+
+    @pytest.mark.parametrize(
+        "story_format,passage_selector,link_selector", EXPECTED_SELECTORS
+    )
+    def test_baked_smoke_carries_format_specific_passage_selector(
+        self,
+        story_format: str,
+        passage_selector: str,
+        link_selector: str,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        baked = bake(
+            TEMPLATE_NAME,
+            tmp_path_factory.mktemp(f"smoke-sel-{story_format}"),
+            extra_context={"story_format": story_format},
+        )
+        smoke = (baked / "tests" / "test_smoke.py").read_text()
+        assert f'PASSAGE_SELECTOR = "{passage_selector}"' in smoke, (
+            f"expected PASSAGE_SELECTOR = {passage_selector!r} for "
+            f"story_format={story_format!r}, but the baked smoke does not "
+            f"carry that selector. The smoke template likely still ships "
+            f"SugarCube's selectors regardless of the chosen format."
+        )
+        assert f'LINK_SELECTOR = "{link_selector}"' in smoke, (
+            f"expected LINK_SELECTOR = {link_selector!r} for "
+            f"story_format={story_format!r}, but the baked smoke does not "
+            f"carry that selector."
+        )
+
+    @pytest.mark.parametrize(
+        "story_format,passage_selector,_link_selector", EXPECTED_SELECTORS
+    )
+    def test_baked_smoke_does_not_leak_other_formats_selectors(
+        self,
+        story_format: str,
+        passage_selector: str,
+        _link_selector: str,
+        tmp_path_factory: pytest.TempPathFactory,
+    ) -> None:
+        """Inverse-branch sweep: a Harlowe bake must not carry SugarCube's
+        `.link-internal` constant, a Chapbook bake must not carry
+        `<tw-passage>`, etc. Without this guard, a Jinja conditional that
+        falls through silently could ship selectors from the wrong format
+        even while the assertion above passes."""
+        other_format_markers = {
+            "sugarcube": ["link-internal", "#passages"],
+            "harlowe": ["tw-passage", "tw-link"],
+            "chapbook": ['".page"'],
+            "snowman": ['"#story"'],
+        }
+        baked = bake(
+            TEMPLATE_NAME,
+            tmp_path_factory.mktemp(f"smoke-leak-{story_format}"),
+            extra_context={"story_format": story_format},
+        )
+        smoke = (baked / "tests" / "test_smoke.py").read_text()
+        # Strip the docstring's selector-swap reference table; the leak
+        # check is about live code, not commentary.
+        body = smoke.split('"""', 2)[-1] if smoke.count('"""') >= 2 else smoke
+        for other, markers in other_format_markers.items():
+            if other == story_format:
+                continue
+            for marker in markers:
+                assert marker not in body, (
+                    f"baked smoke for story_format={story_format!r} leaks "
+                    f"{other!r}'s selector marker {marker!r} into live code "
+                    f"— the per-format Jinja branch is bleeding through"
+                )
+
+
 class TestBakeCustomContext:
     """Bake with custom values for every variable — defaults must not leak."""
 
