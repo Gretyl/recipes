@@ -11,7 +11,14 @@ import subprocess
 
 import pytest
 
-from tests.helpers import bake, makefile_recipe, mermaid_block, paths
+from tests.helpers import (
+    bake,
+    find_default_leaks,
+    find_jinja_leaks,
+    makefile_recipe,
+    mermaid_block,
+    paths,
+)
 
 
 class TestBakeDefaults:
@@ -157,15 +164,8 @@ class TestBakeDefaults:
 
     def test_no_raw_template_variables(self, baked: pathlib.Path) -> None:
         """No file should contain un-rendered cookiecutter variables."""
-        for p in baked.rglob("*"):
-            if p.is_file():
-                try:
-                    text = p.read_text()
-                except UnicodeDecodeError:
-                    continue
-                assert "{{cookiecutter." not in text, (
-                    f"{p.relative_to(baked)} contains un-rendered template variable"
-                )
+        offenders = find_jinja_leaks(baked, require_cookiecutter=True)
+        assert not offenders, f"un-rendered template variables remain in: {offenders}"
 
     @pytest.mark.slow()
     def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
@@ -316,21 +316,11 @@ class TestBakeCustomContext:
 
     def test_no_default_values_leak(self, baked: pathlib.Path) -> None:
         """Ensure default 'fresh_project' doesn't appear in custom bake."""
-        for p in baked.rglob("*"):
-            if p.is_file():
-                try:
-                    text = p.read_text()
-                except UnicodeDecodeError:
-                    continue
-                assert "fresh_project" not in text, (
-                    f"{p.relative_to(baked)} contains default value 'fresh_project'"
-                )
-                assert "fresh-project" not in text, (
-                    f"{p.relative_to(baked)} contains default value 'fresh-project'"
-                )
-                assert "Fresh Project" not in text, (
-                    f"{p.relative_to(baked)} contains default value 'Fresh Project'"
-                )
+        leaks = find_default_leaks(
+            baked,
+            defaults=("fresh_project", "fresh-project", "Fresh Project"),
+        )
+        assert not leaks, f"default values leaked into custom-context bake: {leaks}"
 
 
 class TestBakeWithWorkflow:

@@ -10,7 +10,13 @@ import subprocess
 
 import pytest
 
-from tests.helpers import bake, makefile_recipe, mermaid_block, paths
+from tests.helpers import (
+    bake,
+    find_jinja_leaks,
+    makefile_recipe,
+    mermaid_block,
+    paths,
+)
 
 
 def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
@@ -119,15 +125,8 @@ def test_core_files_exist(baked: pathlib.Path) -> None:
 
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
-    for p in baked.rglob("*"):
-        if p.is_file():
-            try:
-                text = p.read_text()
-            except UnicodeDecodeError:
-                continue
-            assert "{{cookiecutter." not in text, (
-                f"{p.relative_to(baked)} contains un-rendered template variable"
-            )
+    offenders = find_jinja_leaks(baked, require_cookiecutter=True)
+    assert not offenders, f"un-rendered template variables remain in: {offenders}"
 
 
 def test_cli_defines_ordered_group_with_alphabetical_override(

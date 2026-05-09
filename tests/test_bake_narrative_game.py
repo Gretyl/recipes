@@ -24,7 +24,7 @@ import pytest
 from cookiecutter.exceptions import FailedHookException
 from cookiecutter.main import cookiecutter
 
-from tests.helpers import COOKBOOK_DIR, bake
+from tests.helpers import COOKBOOK_DIR, bake, find_default_leaks, find_jinja_leaks
 
 TEMPLATE_NAME = "narrative-game"
 TEMPLATE_DIR = COOKBOOK_DIR / TEMPLATE_NAME
@@ -624,34 +624,22 @@ class TestBakeCustomContext:
         renders all files by default; the recipes generalize tool only
         scans .py/.toml/.md/.json/.yaml/.yml/.txt for round-tripping,
         but the bake output itself must still be Jinja-clean."""
-        defaults = ("my-narrative", "An Untitled Room", "Anonymous")
-        text_suffixes = {
-            ".md",
-            ".toml",
-            ".json",
-            ".yaml",
-            ".yml",
-            ".txt",
-            ".twee",
-            ".sh",
-            ".py",
-        }
-        leaks: list[tuple[pathlib.Path, str]] = []
-        for path in baked.rglob("*"):
-            if not path.is_file():
-                continue
-            if path.suffix not in text_suffixes and path.name not in {
-                "Makefile",
-                ".gitignore",
-            }:
-                continue
-            try:
-                text = path.read_text()
-            except UnicodeDecodeError:
-                continue
-            for default in defaults:
-                if default in text:
-                    leaks.append((path.relative_to(baked), default))
+        leaks = find_default_leaks(
+            baked,
+            defaults=("my-narrative", "An Untitled Room", "Anonymous"),
+            suffixes={
+                ".md",
+                ".toml",
+                ".json",
+                ".yaml",
+                ".yml",
+                ".txt",
+                ".twee",
+                ".sh",
+                ".py",
+            },
+            extra_names={"Makefile", ".gitignore"},
+        )
         assert not leaks, f"default values leaked into custom-context bake: {leaks}"
 
     def test_no_unrendered_cookiecutter_tokens(self, baked: pathlib.Path) -> None:
@@ -659,16 +647,7 @@ class TestBakeCustomContext:
         the engine missed. Twee/SugarCube/Harlowe use `<<…>>` and `[[…]]`;
         JSON uses single `{`/`}`. Double braces are unambiguously a
         leftover Jinja token."""
-        offenders: list[pathlib.Path] = []
-        for path in baked.rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                text = path.read_text()
-            except UnicodeDecodeError:
-                continue
-            if "{{" in text or "}}" in text:
-                offenders.append(path.relative_to(baked))
+        offenders = find_jinja_leaks(baked)
         assert not offenders, f"unrendered Jinja2 markers in: {offenders}"
 
 

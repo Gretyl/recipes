@@ -82,7 +82,7 @@ def mermaid_block(markdown: str) -> str:
 
 def text_file_offenders(
     baked: pathlib.Path,
-    suffixes: Iterable[str],
+    suffixes: Iterable[str] | None,
     predicate: Callable[[str], bool],
     *,
     extra_names: Iterable[str] = (),
@@ -90,19 +90,24 @@ def text_file_offenders(
     """Walk every text file under ``baked`` and return paths whose content
     satisfies ``predicate``.
 
-    A file qualifies as text if its suffix is in ``suffixes`` or its name
-    is in ``extra_names`` (for files like ``Makefile`` and ``.gitignore``
-    that have no traditional extension). Files that fail to decode as UTF-8
-    are silently skipped — binary assets shouldn't trigger sweep tests.
-    Returned paths are relative to ``baked`` for legible failure messages.
+    With ``suffixes`` set, a file qualifies as text if its suffix is in
+    that set or its name is in ``extra_names`` (for files like
+    ``Makefile`` and ``.gitignore`` that have no traditional extension).
+    With ``suffixes=None``, every file is considered — UnicodeDecodeError
+    is the binary-skip guard. Returned paths are relative to ``baked``
+    for legible failure messages.
     """
-    suffix_set = set(suffixes)
+    suffix_set = set(suffixes) if suffixes is not None else None
     name_set = set(extra_names)
     offenders: list[pathlib.Path] = []
     for path in baked.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix not in suffix_set and path.name not in name_set:
+        if (
+            suffix_set is not None
+            and path.suffix not in suffix_set
+            and path.name not in name_set
+        ):
             continue
         try:
             text = path.read_text()
@@ -116,26 +121,30 @@ def text_file_offenders(
 def find_default_leaks(
     baked: pathlib.Path,
     defaults: Iterable[str],
-    suffixes: Iterable[str],
+    suffixes: Iterable[str] | None = None,
     *,
     extra_names: Iterable[str] = (),
 ) -> list[tuple[pathlib.Path, str]]:
     """Find ``(path, default_value)`` pairs where any string in ``defaults``
     appears in a text file's contents.
 
-    Useful for custom-context bake tests: every default must be replaced by
-    the override, and a leak is a hardcoded substring that escaped Jinja
-    substitution. Suffix and extra-name filtering matches
-    :func:`text_file_offenders`.
+    Useful for custom-context bake tests: every default must be replaced
+    by the override, and a leak is a hardcoded substring that escaped
+    Jinja substitution. Filtering matches :func:`text_file_offenders` —
+    pass ``suffixes=None`` to scan every text file with no suffix gate.
     """
     default_list = list(defaults)
-    suffix_set = set(suffixes)
+    suffix_set = set(suffixes) if suffixes is not None else None
     name_set = set(extra_names)
     leaks: list[tuple[pathlib.Path, str]] = []
     for path in baked.rglob("*"):
         if not path.is_file():
             continue
-        if path.suffix not in suffix_set and path.name not in name_set:
+        if (
+            suffix_set is not None
+            and path.suffix not in suffix_set
+            and path.name not in name_set
+        ):
             continue
         try:
             text = path.read_text()
