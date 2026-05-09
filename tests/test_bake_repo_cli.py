@@ -147,6 +147,17 @@ def test_agents_md_documents_conventional_commits(baked: pathlib.Path) -> None:
         )
 
 
+def test_agents_md_documents_cog_block_etiquette(baked: pathlib.Path) -> None:
+    """Baked AGENTS.md must warn that edits inside README.md's Cog blocks are
+    overwritten on every push by `update-readme.yml`. Names the COG_OPEN
+    delimiter so an agent searching the docs finds the section, and points
+    at `template.py` as the canonical edit site."""
+    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
+    assert "Cog" in agents
+    assert "[[[cog" in agents
+    assert "template.py" in agents
+
+
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
     for p in baked.rglob("*"):
