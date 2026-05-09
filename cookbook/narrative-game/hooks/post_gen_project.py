@@ -1,4 +1,4 @@
-"""Post-generation hook for the narrative-game-template cookiecutter.
+"""Post-generation hook for the narrative-game cookiecutter.
 
 Runs after templates are rendered. Two responsibilities:
 

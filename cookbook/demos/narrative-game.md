@@ -1,4 +1,4 @@
-# narrative-game-template walkthrough
+# narrative-game walkthrough
 
 A single cookiecutter template that scaffolds a **Twine 3 narrative game**, compiled to a self-contained HTML by the [`tweego`](https://www.motoslave.net/tweego/) Go binary. The template ships with example crib-sheets for three opinionated forms — *A Dark Room*-style found-UI clickers, *Universal Paperclips*-style numerical clickers, and IFComp-style choice fiction — and verifies its output end-to-end via headless Chrome through `rodney`.
 
@@ -148,7 +148,7 @@ cat cookiecutter.json
 
 Once baked, the project ships a Makefile with `make test` as the single pre-commit gate per Gretyl/recipes cookbook convention. Three commands take a fresh bake to a verified build:
 
-<pre><code>cookiecutter cookbook/narrative-game-template/   # baked into ./my-narrative
+<pre><code>cookiecutter cookbook/narrative-game/   # baked into ./my-narrative
 cd my-narrative
 
 make setup-twine    # downloads tweego 2.1.1 into .tweego/ (one-time)

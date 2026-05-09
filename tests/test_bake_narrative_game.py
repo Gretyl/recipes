@@ -1,7 +1,7 @@
-"""Bake-level tests for the narrative-game-template cookiecutter template.
+"""Bake-level tests for the narrative-game cookiecutter template.
 
 Consolidates the nine working-dir test files from the upstream
-``narrative-game-template/tests/`` into a single cookbook-rooted
+``narrative-game/tests/`` into a single cookbook-rooted
 suite that uses ``tests.helpers.bake``. Network-gated rounds (tweego
 download, ``make dist`` compile, end-to-end ``make test`` smoke) are
 ``@pytest.mark.slow`` and additionally guarded by the
@@ -26,7 +26,7 @@ from cookiecutter.main import cookiecutter
 
 from tests.helpers import COOKBOOK_DIR, bake
 
-TEMPLATE_NAME = "narrative-game-template"
+TEMPLATE_NAME = "narrative-game"
 TEMPLATE_DIR = COOKBOOK_DIR / TEMPLATE_NAME
 COOKIECUTTER_JSON = TEMPLATE_DIR / "cookiecutter.json"
 

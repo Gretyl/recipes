@@ -1,4 +1,4 @@
-# narrative-game-template notes
+# narrative-game notes
 
 ## Approach
 

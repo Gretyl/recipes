@@ -1,7 +1,7 @@
 # {{ cookiecutter.title }}
 
 A Twine narrative game by {{ cookiecutter.author_name }}, scaffolded
-from the `narrative-game-template` cookiecutter (cookbook entry in
+from the `narrative-game` cookiecutter (cookbook entry in
 [Gretyl/recipes](https://github.com/Gretyl/recipes)).
 
 Story format: **{{ cookiecutter._format_proper[cookiecutter.story_format] }}**.

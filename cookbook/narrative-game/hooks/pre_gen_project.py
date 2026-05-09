@@ -1,4 +1,4 @@
-"""Pre-generation hook for the narrative-game-template cookiecutter.
+"""Pre-generation hook for the narrative-game cookiecutter.
 
 Validates ``project_slug`` against the canonical "kebab-case" pattern
 that npm packages, GitHub repos, and PyPI projects all share. A
