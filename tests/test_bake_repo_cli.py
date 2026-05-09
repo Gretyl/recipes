@@ -117,14 +117,12 @@ def test_core_files_exist(baked: pathlib.Path) -> None:
     assert (baked / "demo_repo_cli" / "AGENTS.md").is_file()
 
 
-def test_claude_md_delegates_to_package_agents(baked: pathlib.Path) -> None:
-    """CLAUDE.md at the project root delegates to the package-level AGENTS.md
-    so both filenames resolve to the same guidance. The package path is
-    threaded through cookiecutter so the stub stays correct under custom
-    package_name."""
-    claude = baked / "CLAUDE.md"
-    assert claude.is_file()
-    assert claude.read_text() == "@demo_repo_cli/AGENTS.md\n"
+def test_does_not_ship_claude_md(baked: pathlib.Path) -> None:
+    """`repo-cli` is designed to bake into a host repo as a subpackage. The
+    host already owns the project-root `CLAUDE.md`; shipping one with the
+    template would either duplicate or shadow it. Agents reach the CLI's
+    AGENTS.md by navigating into `{{package_name}}/`."""
+    assert not (baked / "CLAUDE.md").exists()
 
 
 def test_agents_md_pr_convention_is_narrative(baked: pathlib.Path) -> None:
@@ -181,7 +179,7 @@ def test_shared_file_tree(baked: pathlib.Path) -> None:
     assert "tests/test_template_prepare.py" in tree
     assert "README.md" in tree
     assert "demo_repo_cli/AGENTS.md" in tree
-    assert "CLAUDE.md" in tree
+    assert "CLAUDE.md" not in tree
     assert "pyproject.toml" in tree
     assert "requirements.txt" in tree
     assert ".envrc" in tree
@@ -327,26 +325,3 @@ class TestBakeWithoutWorkflow:
         """When the flag is no, the CI section must not leak into the README."""
         readme = (baked / "README.md").read_text()
         assert "## CI" not in readme
-
-
-class TestClaudeMdPropagation:
-    """Propagation: CLAUDE.md's @<package>/AGENTS.md path must track the
-    cookiecutter-derived package_name, not bake the default.
-    """
-
-    @pytest.fixture(scope="class")
-    def baked(self, tmp_path_factory: pytest.TempPathFactory) -> pathlib.Path:
-        return bake(
-            "repo-cli",
-            tmp_path_factory.mktemp("custom-package"),
-            extra_context={
-                "project_name": "Widget Tools",
-                "target_repo": "widget-tools",
-                "include_github_workflows": "no",
-            },
-        )
-
-    def test_claude_md_uses_custom_package_name(self, baked: pathlib.Path) -> None:
-        claude = baked / "CLAUDE.md"
-        assert claude.is_file()
-        assert claude.read_text() == "@widget_tools_cli/AGENTS.md\n"

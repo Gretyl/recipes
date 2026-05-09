@@ -123,39 +123,38 @@ class TestDependencyMatch:
 
 
 class TestAgentsAndClaudeMdParity:
-    """Sweep invariant: every cookbook template must bake an AGENTS.md and a
-    CLAUDE.md sibling delegation stub so both filenames resolve to the same
-    guidance.
-
-    Lands green-on-arrival as the sweep guard for the per-template red→green
-    pairs that introduced the stubs:
-
-      - python-project: e5015c8 / f39cd86
-      - repo-cli:       c6cae2a / 9504eab
-
-    artifact-bench already shipped both files (CHANGELOG [Unreleased]).
+    """Sweep invariant: every cookbook template ships an AGENTS.md.
+    Standalone-repo templates (python-project, artifact-bench) also ship a
+    project-root CLAUDE.md delegation stub. The repo-cli template is
+    designed to bake into a host repo as a subpackage and so does *not*
+    ship a CLAUDE.md — the host already owns the project-root file.
     """
 
     @pytest.mark.parametrize(
         ("template", "agents_path", "claude_target"),
         [
             ("python-project", "AGENTS.md", "@AGENTS.md\n"),
-            ("repo-cli", "my_repo_cli/AGENTS.md", "@my_repo_cli/AGENTS.md\n"),
+            ("repo-cli", "my_repo_cli/AGENTS.md", None),
             ("artifact-bench", "AGENTS.md", "@AGENTS.md\n"),
         ],
     )
-    def test_baked_output_ships_agents_and_claude_md(
+    def test_baked_output_ships_agents_and_optional_claude_md(
         self,
         tmp_path: pathlib.Path,
         template: str,
         agents_path: str,
-        claude_target: str,
+        claude_target: str | None,
     ) -> None:
         baked = bake(template, tmp_path)
         assert (baked / agents_path).is_file(), f"{template} bake missing {agents_path}"
         claude = baked / "CLAUDE.md"
-        assert claude.is_file(), f"{template} bake missing CLAUDE.md"
-        assert claude.read_text() == claude_target, (
-            f"{template} CLAUDE.md must be {claude_target!r}, "
-            f"got {claude.read_text()!r}"
-        )
+        if claude_target is None:
+            assert not claude.exists(), (
+                f"{template} must not ship CLAUDE.md (subpackage-merge target)"
+            )
+        else:
+            assert claude.is_file(), f"{template} bake missing CLAUDE.md"
+            assert claude.read_text() == claude_target, (
+                f"{template} CLAUDE.md must be {claude_target!r}, "
+                f"got {claude.read_text()!r}"
+            )
