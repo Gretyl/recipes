@@ -9,8 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `python-project` and `repo-cli`: templates now ship a `CLAUDE.md` delegation stub at the project root so agents that look up `CLAUDE.md` first reach the same guidance as those that read `AGENTS.md`. Matches the `artifact-bench` pattern. `python-project` delegates with `@AGENTS.md`; `repo-cli` delegates with `@{{cookiecutter.package_name}}/AGENTS.md` because its agent guidance lives at the package level.
+- `python-project`: template now ships a `CLAUDE.md` delegation stub at the project root (`@AGENTS.md`) so agents that look up `CLAUDE.md` first reach the same guidance as those that read `AGENTS.md`. Matches the `artifact-bench` pattern. `repo-cli` deliberately does not ship a `CLAUDE.md` — it's designed to bake into a host repo as a subpackage, and the host's project-root file belongs to the host.
 - `python-project` and `repo-cli`: baked `AGENTS.md` now includes a Commit Conventions section naming Conventional Commits, listing the parent repo's allowed types (`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`), and template-appropriate scopes (`lib` / `cli`, plus `tests`, `docs`, `deps`). A fresh punch can now follow the convention without chasing it back to the parent repo.
+- `python-project`: baked `AGENTS.md` now documents the release sequence (bump `pyproject.toml` → rename `[Unreleased]` → `uv sync` *before* commit → `chore(release):` commit → annotated `git tag -a` → `make dist` validates → push). Condenses `/AGENTS.md` § "Distribution" so a fresh punch carries the discipline inline; the baked Makefile already ships the `make dist` validation gate but the order to run things wasn't reachable without the parent repo.
+- `repo-cli`: baked `AGENTS.md` now warns that edits inside `README.md`'s Cog blocks (`<!--[[[cog ... ]]]-->`) are silently overwritten on every push to `main` by `update-readme.yml`'s `cog -r README.md` run, with `{{cookiecutter.package_name}}/tui/template.py` named as the canonical edit site. The template-management subcommands and Cog-based README pipeline existed in the bake but the overwrite hazard wasn't documented.
+- `artifact-bench`: baked `AGENTS.md` now names the three cookiecutter variables that are baked at punch time and govern parts of the layout an agent can't flip post-bake: `primary_artifact_slug`, `include_example_artifact`, `include_github_workflows`. Frames them as integration commitments, not runtime config.
 - `artifact-bench`: template now ships `AGENTS.md` (agent-only scope, per the convention IMPLODE's homing documented — no duplication of `docs/authoring.md` or `docs/verification.md`) and a `CLAUDE.md` delegation stub (`@AGENTS.md`), so every punch inherits the commit workflow, per-artifact-ledger pattern, and scope-discipline guidance without rediscovering them.
 - `artifact-bench`: template now ships `package-lock.json`, making `npm ci` succeed on first CI run instead of failing until an author locally regenerates and commits the lockfile.
 - `artifact-bench`: README now has a `## Publishing` section explicitly naming `make build` as the publish step, the byte-for-byte `src/<slug>/artifact.html → public/<slug>.html` identity, and the deploy URL. Both Artemis Trail and IMPLODE arrived at near-identical prose for this independently during their homings.
@@ -27,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Release process: tags are now mandated to be **annotated** (`git tag -a vX.Y.Z -m "Release vX.Y.Z"`) per `AGENTS.md` § "Distribution". Lightweight tags strand the tagger identity, timestamp, and message that `git describe`, `git log --decorate`, and the GitHub release UI all read; the published `v1.1.0` is the existing cautionary example, and the immutability rule on the git server makes a stranded lightweight tag unrecoverable except by issuing a new patch version.
 - `artifact-bench`: `.gitignore` now excludes `.claude/` so Claude Code's per-project session state doesn't leak into commits.
 
 ## [1.1.1] - 2026-04-19
