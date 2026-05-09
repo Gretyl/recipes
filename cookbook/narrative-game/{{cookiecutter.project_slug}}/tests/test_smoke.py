@@ -8,15 +8,21 @@ single user-visible property of the rendered story:
     2. Clicking the first internal link transitions to a different
        passage (proves the runtime is alive and link wiring is intact).
 
-Selectors below are written for **SugarCube** (the default story
-format). For other formats, replace as follows:
+Selectors below are rendered at bake time for the chosen
+``story_format`` ({{ cookiecutter.story_format }}). The four
+tweego-bundled formats render passages differently:
 
-    SugarCube:  #passages .passage    a.link-internal
-    Harlowe:    tw-passage             tw-link, tw-link-changer
-    Chapbook:   .page                  a
-    Snowman:    #story                 a
+    SugarCube:  #passages .passage    #passages a.link-internal
+    Harlowe:    tw-passage            tw-link
+    Chapbook:   .page                 .page a
+    Snowman:    #story                #story a
 
-Run via ``make verify`` after ``make setup-twine && make dist``.
+Transition detection compares the passage container's textContent
+before vs. after the click — that's format-agnostic, since SugarCube's
+``data-passage`` attribute, Harlowe's ``<tw-passage>`` element, and
+the others all change their text body when a new passage renders.
+
+Run via ``make test`` after ``make setup-twine && make dist``.
 """
 from __future__ import annotations
 
@@ -25,11 +31,21 @@ from pathlib import Path
 
 import pytest
 
-# SugarCube selectors — adjust per the table in this module's docstring.
+{% if cookiecutter.story_format == "sugarcube" -%}
 PASSAGE_SELECTOR = "#passages .passage"
 LINK_SELECTOR = "#passages a.link-internal"
-PASSAGE_ID_JS = (
-    f"document.querySelector('{PASSAGE_SELECTOR}').getAttribute('data-passage')"
+{% elif cookiecutter.story_format == "harlowe" -%}
+PASSAGE_SELECTOR = "tw-passage"
+LINK_SELECTOR = "tw-link"
+{% elif cookiecutter.story_format == "chapbook" -%}
+PASSAGE_SELECTOR = ".page"
+LINK_SELECTOR = ".page a"
+{% elif cookiecutter.story_format == "snowman" -%}
+PASSAGE_SELECTOR = "#story"
+LINK_SELECTOR = "#story a"
+{%- endif %}
+PASSAGE_TEXT_JS = (
+    f"document.querySelector('{PASSAGE_SELECTOR}').textContent.trim()"
 )
 
 
@@ -58,7 +74,7 @@ def rodney_session(dist_html: Path):
     _rodney("start", timeout=60)
     try:
         _rodney("open", f"file://{dist_html}")
-        # Network-idle alone isn't enough — SugarCube still needs to
+        # Network-idle alone isn't enough — the runtime still needs to
         # parse <tw-storydata> and render the start passage. Wait for
         # the passage container to appear.
         _rodney("wait", PASSAGE_SELECTOR, timeout=15)
@@ -80,15 +96,15 @@ def test_passage_renders_with_text(rodney_session: None) -> None:
 @pytest.mark.browser
 def test_first_link_transitions_passage(rodney_session: None) -> None:
     """Clicking the first internal link navigates to a different passage."""
-    before = _rodney("js", PASSAGE_ID_JS).stdout.strip()
-    assert before, "could not read starting passage's data-passage attribute"
+    before = _rodney("js", PASSAGE_TEXT_JS).stdout.strip()
+    assert before, "could not read starting passage's text content"
 
     _rodney("click", LINK_SELECTOR)
-    # SugarCube re-renders #passages on transition; give it a moment
-    # then re-query.
+    # The runtime re-renders the passage container on transition; give
+    # it a moment then re-query.
     _rodney("sleep", "0.5")
 
-    after = _rodney("js", PASSAGE_ID_JS).stdout.strip()
+    after = _rodney("js", PASSAGE_TEXT_JS).stdout.strip()
     assert before != after, (
         f"link click did not transition passage (still on {before!r}) — "
         f"the runtime may not be hooked up, or the link selector "
