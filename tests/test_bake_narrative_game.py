@@ -322,6 +322,72 @@ class TestBakeDefaults:
         data = _parse_storydata(baked)
         assert data["start"] == "Start"
 
+    def test_storytitle_renders_title_under_header(self, baked: pathlib.Path) -> None:
+        """StoryTitle's body feeds tweego's `<tw-storydata name="...">`
+        attribute. The default cookiecutter title must land under the
+        `:: StoryTitle` header — without that, the compiled HTML
+        identifies the story as an empty string."""
+        content = (baked / "src" / "StoryTitle.twee").read_text()
+        assert content.lstrip().startswith(":: StoryTitle"), (
+            "StoryTitle.twee must begin with `:: StoryTitle` Twee 3 header"
+        )
+        assert "An Untitled Room" in content, (
+            f"default cookiecutter title not in StoryTitle.twee:\n{content!r}"
+        )
+
+    def test_storystylesheet_carries_stylesheet_tag(self, baked: pathlib.Path) -> None:
+        """The `[stylesheet]` tag on the StoryStylesheet header is what
+        tells tweego the body is CSS, not Twee. Without it, the body
+        renders as a passage instead of injecting a `<style>` element."""
+        content = (baked / "src" / "StoryStylesheet.twee").read_text()
+        assert content.lstrip().startswith(":: StoryStylesheet [stylesheet]"), (
+            f"StoryStylesheet.twee header missing `[stylesheet]` tag:\n"
+            f"{content[:200]!r}"
+        )
+
+    def test_storystylesheet_ships_diegetic_ui_defaults(
+        self, baked: pathlib.Path
+    ) -> None:
+        """The default stylesheet is the template's *starting marks* —
+        dim background, monospaced narrow column, restyled buttons and
+        internal links. These are documented in the demo as freely
+        editable but must be the bake's starting point so the first
+        `make dist` looks the part."""
+        content = (baked / "src" / "StoryStylesheet.twee").read_text()
+        assert "body {" in content, "stylesheet must define a body rule"
+        assert "background:" in content, (
+            "stylesheet must set a background colour (the diegetic dim ground)"
+        )
+        assert "monospace" in content, "stylesheet must declare a monospace font stack"
+        assert ".link-internal" in content or "a.link-internal" in content, (
+            "stylesheet must restyle SugarCube's `.link-internal` class — "
+            "without that, the default `[[Wait]]` link renders as a "
+            "browser-default underlined hyperlink"
+        )
+
+    def test_storyscript_carries_script_tag(self, baked: pathlib.Path) -> None:
+        """The `[script]` tag on the StoryScript header is what tells
+        tweego the body is JS. Without it, the body renders as a
+        passage instead of injecting a `<script>` element."""
+        content = (baked / "src" / "StoryScript.twee").read_text()
+        assert content.lstrip().startswith(":: StoryScript [script]"), (
+            f"StoryScript.twee header missing `[script]` tag:\n{content[:200]!r}"
+        )
+
+    def test_storyinit_seeds_initial_state(self, baked: pathlib.Path) -> None:
+        """StoryInit runs once at story start and is where authors
+        initialise variables. The default bake seeds at least one
+        SugarCube `<<set ...>>` macro so authors have a working pattern
+        to copy from rather than an empty file."""
+        content = (baked / "src" / "StoryInit.twee").read_text()
+        assert content.lstrip().startswith(":: StoryInit"), (
+            "StoryInit.twee must begin with `:: StoryInit` Twee 3 header"
+        )
+        assert "<<set" in content, (
+            "StoryInit.twee must seed at least one SugarCube `<<set ...>>` "
+            "macro so authors have a starting pattern"
+        )
+
 
 class TestIfidSynthesis:
     """post_gen_project IFID handling: blank → UUID4, user-supplied → preserved."""
