@@ -1,6 +1,7 @@
 """Shared test utilities."""
 
 import pathlib
+from collections.abc import Callable, Iterable
 
 from cookiecutter.main import cookiecutter
 
@@ -77,6 +78,107 @@ def mermaid_block(markdown: str) -> str:
     end = markdown.find("```", body_start)
     assert end != -1, "mermaid block has no closing fence"
     return markdown[body_start:end]
+
+
+def text_file_offenders(
+    baked: pathlib.Path,
+    suffixes: Iterable[str],
+    predicate: Callable[[str], bool],
+    *,
+    extra_names: Iterable[str] = (),
+) -> list[pathlib.Path]:
+    """Walk every text file under ``baked`` and return paths whose content
+    satisfies ``predicate``.
+
+    A file qualifies as text if its suffix is in ``suffixes`` or its name
+    is in ``extra_names`` (for files like ``Makefile`` and ``.gitignore``
+    that have no traditional extension). Files that fail to decode as UTF-8
+    are silently skipped — binary assets shouldn't trigger sweep tests.
+    Returned paths are relative to ``baked`` for legible failure messages.
+    """
+    suffix_set = set(suffixes)
+    name_set = set(extra_names)
+    offenders: list[pathlib.Path] = []
+    for path in baked.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.suffix not in suffix_set and path.name not in name_set:
+            continue
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue
+        if predicate(text):
+            offenders.append(path.relative_to(baked))
+    return offenders
+
+
+def find_default_leaks(
+    baked: pathlib.Path,
+    defaults: Iterable[str],
+    suffixes: Iterable[str],
+    *,
+    extra_names: Iterable[str] = (),
+) -> list[tuple[pathlib.Path, str]]:
+    """Find ``(path, default_value)`` pairs where any string in ``defaults``
+    appears in a text file's contents.
+
+    Useful for custom-context bake tests: every default must be replaced by
+    the override, and a leak is a hardcoded substring that escaped Jinja
+    substitution. Suffix and extra-name filtering matches
+    :func:`text_file_offenders`.
+    """
+    default_list = list(defaults)
+    suffix_set = set(suffixes)
+    name_set = set(extra_names)
+    leaks: list[tuple[pathlib.Path, str]] = []
+    for path in baked.rglob("*"):
+        if not path.is_file():
+            continue
+        if path.suffix not in suffix_set and path.name not in name_set:
+            continue
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue
+        for default in default_list:
+            if default in text:
+                leaks.append((path.relative_to(baked), default))
+    return leaks
+
+
+def find_jinja_leaks(
+    baked: pathlib.Path,
+    *,
+    require_cookiecutter: bool = False,
+) -> list[pathlib.Path]:
+    """Return paths whose contents contain an unrendered Jinja token.
+
+    With the default ``require_cookiecutter=False``, any file containing
+    ``{{`` or ``}}`` is flagged — a strict check that catches every Jinja
+    escape that didn't render. With ``require_cookiecutter=True``, only
+    files containing both ``{{`` and ``cookiecutter.`` are flagged — useful
+    for templates whose baked output legitimately uses ``{{`` for other
+    purposes (Jinja escapes in baked Jinja templates, JS object literals
+    that look like braces, etc.).
+
+    No suffix filter is applied — Jinja escapes can land in any text file,
+    and binary files are skipped via the UnicodeDecodeError guard.
+    """
+    offenders: list[pathlib.Path] = []
+    for path in baked.rglob("*"):
+        if not path.is_file():
+            continue
+        try:
+            text = path.read_text()
+        except UnicodeDecodeError:
+            continue
+        if require_cookiecutter:
+            if "{{" in text and "cookiecutter." in text:
+                offenders.append(path.relative_to(baked))
+        elif "{{" in text or "}}" in text:
+            offenders.append(path.relative_to(baked))
+    return offenders
 
 
 def readme_section(markdown: str, heading: str) -> str:
