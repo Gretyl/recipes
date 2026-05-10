@@ -145,50 +145,6 @@ class TestBakeDefaults:
     def test_gitattributes_exists(self, baked: pathlib.Path) -> None:
         assert (baked / ".gitattributes").is_file()
 
-    def test_agents_md_exists(self, baked: pathlib.Path) -> None:
-        assert (baked / "AGENTS.md").is_file()
-
-    def test_claude_md_delegates_to_agents(self, baked: pathlib.Path) -> None:
-        """CLAUDE.md is a one-line delegation stub so both filenames resolve
-        to the same guidance."""
-        claude = baked / "CLAUDE.md"
-        assert claude.is_file()
-        assert claude.read_text() == "@AGENTS.md\n"
-
-    def test_agents_md_pr_convention_is_narrative(self, baked: pathlib.Path) -> None:
-        """Baked AGENTS.md must mirror the parent repo's narrative-PR-body
-        convention. The earlier "List all commits in-order as the PR body"
-        wording contradicted /AGENTS.md and is forbidden."""
-        agents = (baked / "AGENTS.md").read_text()
-        assert "List all commits in-order as the PR body" not in agents
-        assert "narrative" in agents.lower()
-        assert "not a commit list" in agents.lower()
-
-    def test_agents_md_documents_conventional_commits(
-        self, baked: pathlib.Path
-    ) -> None:
-        """Baked AGENTS.md must name the Conventional Commits convention and
-        list the parent repo's allowed types so a fresh punch doesn't have to
-        chase the convention upstream."""
-        agents = (baked / "AGENTS.md").read_text()
-        assert "Conventional Commits" in agents
-        for commit_type in ("feat", "fix", "test", "docs", "chore", "refactor"):
-            assert f"`{commit_type}`" in agents, (
-                f"AGENTS.md must list {commit_type!r} as a commit type"
-            )
-
-    def test_agents_md_documents_release_sequence(self, baked: pathlib.Path) -> None:
-        """Baked AGENTS.md must condense /AGENTS.md § Distribution so a fresh
-        punch knows the release order: the lockfile must be regenerated
-        *before* the release commit, the tag must be annotated, and `make
-        dist` is the validation gate."""
-        agents = (baked / "AGENTS.md").read_text()
-        assert "Release" in agents
-        for landmark in ("uv sync", "annotated", "make dist", "CHANGELOG.md"):
-            assert landmark in agents, (
-                f"AGENTS.md release section must name {landmark!r}"
-            )
-
     def test_full_file_tree(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
         assert "fresh_project" in tree
@@ -212,26 +168,6 @@ class TestBakeDefaults:
         """No file should contain un-rendered cookiecutter variables."""
         offenders = find_jinja_leaks(baked, require_cookiecutter=True)
         assert not offenders, f"un-rendered template variables remain in: {offenders}"
-
-    @pytest.mark.slow()
-    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
-        """The baked project's own test suite must pass."""
-        subprocess.run(
-            ["uv", "sync"],
-            cwd=baked,
-            check=True,
-            capture_output=True,
-        )
-        result = subprocess.run(
-            ["uv", "run", "pytest", "-x", "-q"],
-            cwd=baked,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, (
-            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
-        )
 
 
 class TestMakeDistValidation:

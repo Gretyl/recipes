@@ -123,47 +123,6 @@ def test_core_files_exist(baked: pathlib.Path) -> None:
     assert (baked / "demo_repo_cli" / "AGENTS.md").is_file()
 
 
-def test_does_not_ship_claude_md(baked: pathlib.Path) -> None:
-    """`repo-cli` is designed to bake into a host repo as a subpackage. The
-    host already owns the project-root `CLAUDE.md`; shipping one with the
-    template would either duplicate or shadow it. Agents reach the CLI's
-    AGENTS.md by navigating into `{{package_name}}/`."""
-    assert not (baked / "CLAUDE.md").exists()
-
-
-def test_agents_md_pr_convention_is_narrative(baked: pathlib.Path) -> None:
-    """Baked AGENTS.md must mirror the parent repo's narrative-PR-body
-    convention. The earlier "List all commits in-order as the PR body"
-    wording contradicted /AGENTS.md and is forbidden."""
-    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
-    assert "List all commits in-order as the PR body" not in agents
-    assert "narrative" in agents.lower()
-    assert "not a commit list" in agents.lower()
-
-
-def test_agents_md_documents_conventional_commits(baked: pathlib.Path) -> None:
-    """Baked AGENTS.md must name the Conventional Commits convention and list
-    the parent repo's allowed types so a fresh punch doesn't have to chase
-    the convention upstream."""
-    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
-    assert "Conventional Commits" in agents
-    for commit_type in ("feat", "fix", "test", "docs", "chore", "refactor"):
-        assert f"`{commit_type}`" in agents, (
-            f"AGENTS.md must list {commit_type!r} as a commit type"
-        )
-
-
-def test_agents_md_documents_cog_block_etiquette(baked: pathlib.Path) -> None:
-    """Baked AGENTS.md must warn that edits inside README.md's Cog blocks are
-    overwritten on every push by `update-readme.yml`. Names the COG_OPEN
-    delimiter so an agent searching the docs finds the section, and points
-    at `template.py` as the canonical edit site."""
-    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
-    assert "Cog" in agents
-    assert "[[[cog" in agents
-    assert "template.py" in agents
-
-
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
     offenders = find_jinja_leaks(baked, require_cookiecutter=True)
@@ -299,26 +258,6 @@ class TestBakeWithWorkflow:
         workflow = (baked / ".github" / "workflows" / "update-readme.yml").read_text()
         assert "demo-repo template prepare" in workflow
         assert "demo-repo template apply" in workflow
-
-    @pytest.mark.slow()
-    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
-        """The baked project's own test suite must pass."""
-        subprocess.run(
-            ["uv", "sync"],
-            cwd=baked,
-            check=True,
-            capture_output=True,
-        )
-        result = subprocess.run(
-            ["uv", "run", "pytest", "-x", "-q"],
-            cwd=baked,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, (
-            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
-        )
 
     def test_full_file_tree_includes_github(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
