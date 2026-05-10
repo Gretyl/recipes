@@ -17,6 +17,8 @@ exclude-newer = "<RFC 3339 timestamp>"
 
 The cutoff should be at least seven days old. The setting shrinks uv's resolution window so packages published in the last week — yanks, supply-chain rushes, accidental publishes — are excluded from new resolutions. If absent, add it as a separate `chore(deps):` commit (see [failure-mode workflow](#failure-mode-uv-lock-check-fails) below) before proceeding to step 1; treat any post-add lockfile churn as transitive drift to absorb on its own.
 
+> **Note:** Until we're using `uv` 0.9.17+, the `exclude-newer` setting needs to be reset to T-minus 7 days ago as an absolute timestamp. Once our `uv` supports it, switch to ISO-8601 durations instead (e.g. `P7D`).
+
 ### 1. Tag-status sync (local + remote)
 
 ```bash
