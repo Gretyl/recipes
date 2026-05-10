@@ -66,3 +66,6 @@ exclude = ["cookbook/"]
 
 [tool.ruff.lint]
 select = ["SIM", "PIE", "RET", "C90", "C4", "N", "PLW", "PLC"]
+
+[tool.uv]
+exclude-newer = "2026-05-03T00:00:00Z"
