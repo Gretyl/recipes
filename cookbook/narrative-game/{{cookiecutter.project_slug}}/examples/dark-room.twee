@@ -1,0 +1,69 @@
+:: __DarkRoomCribSheet [info]
+A found-UI clicker in the lineage of A Dark Room (Doublespeak Games).
+Pattern: a resource pool, a poetic action log, buttons that mutate
+state and append to the log, conditional unlocks that gate later
+content.
+
+To use: copy whichever passages below into src/. Drop the `DR_`
+prefix on each passage name; reference passages by their new names
+in your links.
+
+
+:: DR_Start
+<<set $wood to 0>>\
+<<set $log to []>>\
+
+The fire is dead. The room is cold.
+
+You stand in the dark. There is a pile of damp logs by the door.
+
+<<button "gather wood">>\
+<<set $wood++>>\
+<<set $log.push("the wood is heavy.")>>\
+<<replace "#stats">>wood: $wood<</replace>>\
+<<replace "#feed">><<print $log.slice(-3).join("<br>")>><</replace>>\
+<</button>>
+
+<div id="stats">wood: $wood</div>
+
+<div id="feed" class="log"></div>
+
+<span id="unlocks"><<if $wood gte 5>>[[The pile is enough.|DR_Builder]]<</if>></span>
+
+
+:: DR_Builder
+You have enough wood to build something.
+
+[[A hut against the cold|DR_Hut]]
+[[A trap for the woods|DR_Trap]]
+[[Wait|DR_Start]]
+
+
+:: DR_Hut
+The hut is up. The cold is gentle. You can hear the wind in the trees.
+
+The fire crackles. You sleep, and dream of a stranger.
+
+[[Wake|DR_Start]]
+
+
+:: DR_Trap
+The trap snaps shut around something small. Tomorrow there will be meat.
+
+<<set $log.push("the trap shut. there will be meat.")>>\
+
+[[Back|DR_Builder]]
+
+
+:: __DarkRoom_Notes
+Three primitives at work here:
+
+  1. **Resource pool** ($wood) — a counter the player accumulates.
+  2. **Append-only log** ($log array, displayed via `slice(-3)`
+     for last-three semantics). The poetic terseness of A Dark Room
+     comes from each line being one short clause.
+  3. **Gated unlock** (`<<if $wood gte 5>>...<</if>>`) — the
+     "Builder" passage only becomes reachable once the resource
+     threshold is met. Mirrors A Dark Room's slow reveal.
+
+If you want cooldowns on the gather button, see paperclips.twee.

@@ -1,0 +1,43 @@
+:: StoryStylesheet [stylesheet]
+/* Diegetic UI defaults: dim ground, terse monospaced column.
+   Override freely — these are starting marks, not commitments. */
+body {
+  background: #111;
+  color: #c5c5c5;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  max-width: 42rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+  line-height: 1.55;
+}
+
+button,
+.link-internal,
+.macro-link {
+  background: transparent;
+  border: 1px solid #444;
+  color: #c5c5c5;
+  padding: 0.4rem 0.8rem;
+  margin: 0.2rem 0.2rem 0.2rem 0;
+  font: inherit;
+  cursor: pointer;
+}
+button:hover,
+.link-internal:hover,
+.macro-link:hover {
+  border-color: #888;
+  color: #fff;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+#log,
+.log {
+  border-top: 1px solid #333;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}

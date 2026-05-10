@@ -1,0 +1,14 @@
+{
+  "project_slug": "my-narrative",
+  "title": "An Untitled Room",
+  "author_name": "Anonymous",
+  "story_format": ["sugarcube", "harlowe", "chapbook", "snowman"],
+  "ifid": "",
+  "include_github_workflow": ["yes", "no"],
+  "_format_proper": {
+    "sugarcube": "SugarCube",
+    "harlowe": "Harlowe",
+    "chapbook": "Chapbook",
+    "snowman": "Snowman"
+  }
+}

@@ -10,7 +10,13 @@ import subprocess
 
 import pytest
 
-from tests.helpers import bake, makefile_recipe, mermaid_block, paths
+from tests.helpers import (
+    bake,
+    find_jinja_leaks,
+    makefile_recipe,
+    mermaid_block,
+    paths,
+)
 
 
 def _bake(tmp_path: pathlib.Path, *, workflow: str) -> pathlib.Path:
@@ -119,15 +125,85 @@ def test_core_files_exist(baked: pathlib.Path) -> None:
 
 def test_no_raw_template_variables(baked: pathlib.Path) -> None:
     """No file should contain un-rendered cookiecutter variables."""
-    for p in baked.rglob("*"):
-        if p.is_file():
-            try:
-                text = p.read_text()
-            except UnicodeDecodeError:
-                continue
-            assert "{{cookiecutter." not in text, (
-                f"{p.relative_to(baked)} contains un-rendered template variable"
-            )
+    offenders = find_jinja_leaks(baked, require_cookiecutter=True)
+    assert not offenders, f"un-rendered template variables remain in: {offenders}"
+
+
+def test_cli_defines_ordered_group_with_alphabetical_override(
+    baked: pathlib.Path,
+) -> None:
+    """The CLI's signature behaviour: subcommand listings sort
+    alphabetically regardless of registration order. The notes call
+    `OrderedGroup` out as the seam — without it, `cli.add_command(...)`
+    order leaks into `--help` output and dashboards-before-status
+    becomes a maintenance ordering problem rather than a code property.
+
+    Pin three things:
+    1. The class exists with the canonical name (so the import in
+       AGENTS.md stays accurate).
+    2. It overrides `list_commands` with a `sorted(super().list_commands(...))`
+       call (the one-line idiom is what makes the property a property).
+    3. The Click group is wired with `cls=OrderedGroup` (otherwise the
+       override never fires)."""
+    cli_py = (baked / "demo_repo_cli" / "tui" / "cli.py").read_text()
+    assert "class OrderedGroup(click.Group):" in cli_py, (
+        "cli.py must define `class OrderedGroup(click.Group)` — the "
+        "alphabetical-listing seam"
+    )
+    assert "def list_commands(" in cli_py, (
+        "OrderedGroup must override `list_commands` — without the override, "
+        "Click falls back to insertion order"
+    )
+    assert "sorted(super().list_commands(" in cli_py, (
+        "the override must call `sorted(super().list_commands(ctx))` — "
+        "any other body silently changes the contract"
+    )
+    assert "cls=OrderedGroup" in cli_py, (
+        "@click.group must be decorated with `cls=OrderedGroup` — without "
+        "it the class exists but never fires"
+    )
+
+
+def test_baked_agents_md_documents_cli_scope_and_standards(
+    baked: pathlib.Path,
+) -> None:
+    """The baked package's AGENTS.md replaces the older `CLI.md` scope
+    document — it's where every author of a baked CLI looks for the
+    development standards before adding a subcommand. Pin the four
+    durable claims the cookbook notes promise are there:
+
+    1. **Scope** — programmatic project support, not application logic.
+    2. **OrderedGroup** entry-point architecture.
+    3. **Pydantic** for structured-data inputs/outputs.
+    4. **TDD discipline** — red/green pairs are mandatory.
+
+    Without these, a baked CLI inherits the directory layout but loses
+    the conventions that distinguish `repo-cli` from a generic Click
+    boilerplate."""
+    agents = (baked / "demo_repo_cli" / "AGENTS.md").read_text()
+    assert "## Scope" in agents, (
+        "AGENTS.md must declare a `## Scope` section — the boundary "
+        "between project-support tooling and application code"
+    )
+    assert "project support" in agents.lower(), (
+        "the Scope section must name the CLI's role as project support "
+        "tooling, not just describe the layout"
+    )
+    assert "OrderedGroup" in agents, (
+        "AGENTS.md must reference `OrderedGroup` — every author needs to "
+        "know what wires the alphabetical listing"
+    )
+    assert "Pydantic" in agents, (
+        "the development-standards section must name Pydantic for "
+        "structured-data signatures"
+    )
+    assert "red/green" in agents.lower() or "red-green" in agents.lower(), (
+        "the development-standards section must name red/green TDD as "
+        "the discipline for adding subcommands"
+    )
+    assert "mypy" in agents.lower(), (
+        "the development-standards section must require strict mypy"
+    )
 
 
 def test_shared_file_tree(baked: pathlib.Path) -> None:
