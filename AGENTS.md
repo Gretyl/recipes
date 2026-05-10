@@ -20,14 +20,15 @@ Run `make help` to list all targets. The most important ones:
 
 | Target | What it does | When to use it |
 |--------|-------------|----------------|
-| `make test` | Runs `check` + `format` + `mypy`, then `uv run pytest` with coverage and doctests | **Before every commit.** This is the single gate that must pass. |
+| `make test` | Runs `check` + `format` + `mypy`, then `uv run pytest -m "not slow"` with coverage and doctests | **Before every commit.** This is the single fast-loop gate. Skips the `@pytest.mark.slow()` integration tests; those run via `make test-slow` or as a dependency of `make dist`. |
+| `make test-slow` | `uv run pytest -m "slow"` — runs the integration-heavy tests (baked-project subprocess runs, network downloads, headless-Chrome smokes) | Before cutting a release; otherwise as a dependency of `make dist`. CI runs only `make test` (fast), so the slow gate is a release-prep step. |
 | `make check` | `uv run ruff check --fix` — lints and auto-fixes | While iterating on code; also runs automatically as part of `make test` |
 | `make format` | `uv run ruff format` — formats all Python files | While iterating on code; also runs automatically as part of `make test` |
 | `make mypy` | `uv run mypy` over `recipes/`, `recipes_cli/`, and `tests/` (runs `format` + `check` first) | Also runs automatically as part of `make test` |
 | `make clean` | Removes caches, `.venv/`, `uv.lock`, `dist/`, etc. | When you need a fresh environment |
-| `make dist` | Runs `test`, then validates version/tag/changelog consistency and builds a release | Release prep only |
+| `make dist` | Runs `test` and `test-slow`, then validates version/tag/changelog consistency and builds a release | Release prep only |
 
-**Always run `make test` before committing.** It includes `mypy` — strict type-checking is required for all code.
+**Always run `make test` before committing.** It includes `mypy` — strict type-checking is required for all code. Run `make test-slow` (or just `make dist`, which depends on both) before cutting a release.
 
 ### `recipes` CLI
 
@@ -54,7 +55,7 @@ Order of operations:
 2. Run `uv sync` — this regenerates `uv.lock` against the new `pyproject.toml` version. **Do this before committing**, not after; `make test` triggers `uv sync` implicitly, so running it post-commit strands lockfile changes outside the release commit.
 3. Stage `pyproject.toml`, `CHANGELOG.md`, and `uv.lock` together. Commit as `chore(release): prepare vX.Y.Z`.
 4. Tag the commit with an **annotated** tag: `git tag -a vX.Y.Z -m "Release vX.Y.Z"`. Release tags **must** be annotated — never lightweight. The `-a` flag writes a real tag object carrying tagger identity, timestamp, and message, which is what `git describe`, `git log --decorate`, and GitHub's release UI all read. A lightweight tag (`git tag vX.Y.Z`, no `-a`) looks fine locally but strands that metadata, and because the remote rejects tag delete and tag force-push (see immutability note below), a lightweight tag that has been pushed stays lightweight forever — `v1.1.0` is the existing cautionary example. Before pushing, verify with `git cat-file -t vX.Y.Z`: it must print `tag`, not `commit`. If it prints `commit`, delete locally (`git tag -d vX.Y.Z`) and redo with `-a`.
-5. Run `make dist`. It verifies the tag points at HEAD, the version/tag/CHANGELOG match, and the tree is clean. A clean pass emits `dist/recipes-X.Y.Z.tar.gz` and `.whl`.
+5. Run `make dist`. It depends on both `make test` (fast) and `make test-slow` (integration), so the full suite runs before validation; it then verifies the tag points at HEAD, the version/tag/CHANGELOG match, and the tree is clean. A clean pass emits `dist/recipes-X.Y.Z.tar.gz` and `.whl`.
 6. Push branch **and** tag: `git push origin <branch> && git push origin vX.Y.Z`.
 
 Published tags are immutable on the git server (tag delete and tag force-push are both rejected). If a release commit lands with drift, the recovery path is a new patch version — not a retagged `X.Y.Z`. The commit body should name which earlier tag the patch is recovering.
