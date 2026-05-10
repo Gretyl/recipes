@@ -388,6 +388,21 @@ class TestBakeDefaults:
             "macro so authors have a starting pattern"
         )
 
+    def test_agents_md_exists(self, baked: pathlib.Path) -> None:
+        """`narrative-game` is a standalone Twine workbench. By the cookbook
+        pattern (matching `python-project` and `artifact-bench`), it ships
+        an `AGENTS.md` at the project root scoped to agent-only conventions
+        that have no other home."""
+        assert (baked / "AGENTS.md").is_file()
+
+    def test_claude_md_delegates_to_agents(self, baked: pathlib.Path) -> None:
+        """`CLAUDE.md` is a one-line delegation stub so both filenames
+        resolve to the same guidance. Same pattern as python-project and
+        artifact-bench."""
+        claude = baked / "CLAUDE.md"
+        assert claude.is_file()
+        assert claude.read_text() == "@AGENTS.md\n"
+
 
 class TestIfidSynthesis:
     """post_gen_project IFID handling: blank → UUID4, user-supplied → preserved."""

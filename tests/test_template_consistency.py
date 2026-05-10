@@ -136,6 +136,7 @@ class TestAgentsAndClaudeMdParity:
             ("python-project", "AGENTS.md", "@AGENTS.md\n"),
             ("repo-cli", "my_repo_cli/AGENTS.md", None),
             ("artifact-bench", "AGENTS.md", "@AGENTS.md\n"),
+            ("narrative-game", "AGENTS.md", "@AGENTS.md\n"),
         ],
     )
     def test_baked_output_ships_agents_and_optional_claude_md(
