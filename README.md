@@ -26,6 +26,7 @@ for name in templates:
         print(f"* {name}")
 ]]]-->
 * artifact-bench ([notes](cookbook/notes/artifact-bench.md) | [demo](cookbook/demos/artifact-bench.md))
+* narrative-game ([notes](cookbook/notes/narrative-game.md) | [demo](cookbook/demos/narrative-game.md))
 * python-project ([notes](cookbook/notes/python-project.md) | [demo](cookbook/demos/python-project.md))
 * repo-cli ([notes](cookbook/notes/repo-cli.md) | [demo](cookbook/demos/repo-cli.md))
 <!--[[[end]]]-->
