@@ -1,0 +1,17 @@
+[project]
+name = "{{ cookiecutter.project_slug }}"
+version = "0.1.0"
+description = "{{ cookiecutter.title }} — a Twine narrative game"
+authors = [{name = "{{ cookiecutter.author_name }}"}]
+requires-python = ">=3.13"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+dev = ["rodney"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "browser: requires headless Chrome via rodney; needs a built dist/index.html",
+]

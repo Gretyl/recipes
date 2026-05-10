@@ -1,0 +1,18 @@
+# Build artefacts
+dist/
+
+# Locally-installed tweego (downloaded by `make setup-twine`)
+.tweego/
+
+# Local rodney session state
+.rodney/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Editor noise
+.DS_Store
+*.swp

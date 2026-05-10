@@ -1,0 +1,4 @@
+:: StoryScript [script]
+/* Author hooks. Custom JS goes here.
+   See examples/*.twee for cookbook recipes (resource pools, cooldowns,
+   prestige loops). */

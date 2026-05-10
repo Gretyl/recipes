@@ -1,0 +1,11 @@
+:: Start
+{{ cookiecutter.title }} — by {{ cookiecutter.author_name }}.
+
+The room is dark. Nothing has happened yet.
+
+[[Wait]]
+
+:: Wait
+Time passes. The dark stays dark.
+
+[[Start]]
