@@ -18,6 +18,25 @@ docs.
 
 Run `make help` for the target list; don't duplicate it here.
 
+## Punch knobs
+
+Three cookiecutter variables are baked in at punch time and govern
+parts of the layout you can't flip later without re-baking:
+
+- `primary_artifact_slug` — when set, the README leads with a
+  "canonical artifact" framing and threads the slug into the deploy
+  URL; empty preserves the generic gallery framing.
+- `include_example_artifact` — `yes` ships `src/hello-artifact/` so a
+  fresh punch has something to verify against; `no` ships
+  `src/.gitkeep` and the empty-repo-green discipline below applies.
+- `include_github_workflows` — gates `.github/workflows/`. A punch
+  without workflows ships no `ci.yml`; CI lives only locally via
+  `make verify` / `make test`.
+
+Treat these as integration commitments, not runtime config — they're
+encoded across the README, deploy URLs, gitignored paths, manifest,
+and post-gen hook removals, and aren't centralized.
+
 ## Commit & PR workflow
 
 - **Conventional Commits** on the subject line: `<type>(<scope>): <summary>`.

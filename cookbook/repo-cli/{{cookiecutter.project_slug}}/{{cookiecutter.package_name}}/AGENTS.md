@@ -35,6 +35,10 @@ The CLI exists to give Makefile targets (and developers) a programmable interfac
 - **Pattern:** Add new subcommands as `@cli.command()` functions in `cli.py`, or as separate modules registered onto the `cli` group via `cli.add_command()`
 - **Rich/Textual stubs:** `status.py` and `dashboard.py` are starter modules demonstrating Rich console output and Textual TUI apps. Both are available as dev dependencies — extend or replace them as the project grows.
 
+### Cog blocks in README.md
+
+The baked `README.md` contains `<!--[[[cog ... ]]] ... [[[end]]]-->` blocks that `.github/workflows/update-readme.yml` regenerates by running `cog -r README.md` on every push to `main`. **Edits inside a Cog block are silently overwritten on the next push.** To change generated content, edit the template code in `{{cookiecutter.package_name}}/tui/template.py` (the `template apply` and `template prepare` subcommands manage the lifecycle); content *outside* the Cog delimiters is hand-edited as normal.
+
 ## Development standards
 
 Every CLI subcommand — both new proposals and pre-existing commands — must satisfy three requirements:
@@ -126,6 +130,20 @@ example:
 
 After making CLI changes, run `uvx showboat --help` and use showboat to update `USAGE.md`.
 
+## Commit Conventions
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) on the subject line:
+
+```
+<type>(<scope>): <short summary>
+```
+
+Allowed **types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `build`, `ci`, `perf`.
+
+Suggested **scopes** for this project: `cli` (the `{{cookiecutter.package_name}}/` package), `tests`, `docs`, `deps`. Omit the scope for cross-cutting changes that span multiple areas.
+
+Tests and the implementation they drive land as **separate commits** so the red→green transition is observable in `git log`.
+
 ## Pull Request Conventions
 
-When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. List all commits in-order as the **PR body**.
+When opening or updating a pull request, summarize the scope of the feature branch across all atomic commits in the **PR title**. Write the **PR body** as a narrative summary of what changed and why — not a commit list. GitHub already surfaces the full commit log; duplicating it in the body is noise during review.

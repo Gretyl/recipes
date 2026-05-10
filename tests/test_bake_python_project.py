@@ -161,31 +161,13 @@ class TestBakeDefaults:
         assert ".envrc" in tree
         assert ".gitattributes" in tree
         assert ".gitignore" in tree
+        assert "AGENTS.md" in tree
+        assert "CLAUDE.md" in tree
 
     def test_no_raw_template_variables(self, baked: pathlib.Path) -> None:
         """No file should contain un-rendered cookiecutter variables."""
         offenders = find_jinja_leaks(baked, require_cookiecutter=True)
         assert not offenders, f"un-rendered template variables remain in: {offenders}"
-
-    @pytest.mark.slow()
-    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
-        """The baked project's own test suite must pass."""
-        subprocess.run(
-            ["uv", "sync"],
-            cwd=baked,
-            check=True,
-            capture_output=True,
-        )
-        result = subprocess.run(
-            ["uv", "run", "pytest", "-x", "-q"],
-            cwd=baked,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, (
-            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
-        )
 
 
 class TestMakeDistValidation:

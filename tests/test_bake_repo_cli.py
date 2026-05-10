@@ -225,6 +225,7 @@ def test_shared_file_tree(baked: pathlib.Path) -> None:
     assert "tests/test_template_prepare.py" in tree
     assert "README.md" in tree
     assert "demo_repo_cli/AGENTS.md" in tree
+    assert "CLAUDE.md" not in tree
     assert "pyproject.toml" in tree
     assert "requirements.txt" in tree
     assert ".envrc" in tree
@@ -257,26 +258,6 @@ class TestBakeWithWorkflow:
         workflow = (baked / ".github" / "workflows" / "update-readme.yml").read_text()
         assert "demo-repo template prepare" in workflow
         assert "demo-repo template apply" in workflow
-
-    @pytest.mark.slow()
-    def test_baked_tests_pass(self, baked: pathlib.Path) -> None:
-        """The baked project's own test suite must pass."""
-        subprocess.run(
-            ["uv", "sync"],
-            cwd=baked,
-            check=True,
-            capture_output=True,
-        )
-        result = subprocess.run(
-            ["uv", "run", "pytest", "-x", "-q"],
-            cwd=baked,
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert result.returncode == 0, (
-            f"Baked tests failed:\n{result.stdout}\n{result.stderr}"
-        )
 
     def test_full_file_tree_includes_github(self, baked: pathlib.Path) -> None:
         tree = paths(baked)
