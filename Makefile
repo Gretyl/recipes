@@ -9,7 +9,8 @@ help:
 	@printf "%-12s %s\n" "format" "Format code using ruff."
 	@printf "%-12s %s\n" "mypy" "Type-check sources with mypy after format/check."
 	@printf "%-12s %s\n" "setup-ci" "Install CI-locked dependencies (uv sync --frozen)."
-	@printf "%-12s %s\n" "test" "Run tests with coverage after check, format, and mypy."
+	@printf "%-12s %s\n" "test" "Run fast tests with coverage after check, format, and mypy."
+	@printf "%-12s %s\n" "test-slow" "Run slow integration tests (release-prep gate; runs as a dependency of dist)."
 
 # Define the directories to be checked and tested
 PYTHON_DIRS = recipes/ recipes_cli/ tests/
@@ -34,8 +35,12 @@ clean:
 		.venv/
 
 test: check format mypy
-	@echo "🧪 Running tests with coverage..."
-	@uv run pytest --doctest-modules --cov=recipes --cov=recipes_cli -v $(PYTHON_DIRS)
+	@echo "🧪 Running fast tests with coverage..."
+	@uv run pytest -m "not slow" --doctest-modules --cov=recipes --cov=recipes_cli -v $(PYTHON_DIRS)
+
+test-slow:
+	@echo "🐢 Running slow integration tests..."
+	@uv run pytest -m "slow" -v $(PYTHON_DIRS)
 
 check:
 	@echo "🐶 Checking code with ruff (fixing issues)..."
@@ -53,7 +58,7 @@ setup-ci:
 	@echo "📦 Installing CI-locked dependencies..."
 	@uv sync --frozen
 
-dist: test
+dist: test test-slow
 	@echo "📦 Preparing versioned release..."
 	@if [ -n "$$(git status --porcelain)" ]; then \
 		echo "❌ Error: Working tree is not clean."; \
@@ -99,4 +104,4 @@ dist: test
 	echo "✅ All release checks passed for version $$PKG_VERSION."; \
 	uv build --out-dir dist/
 
-.PHONY: help clean test check format mypy setup-ci dist
+.PHONY: help clean test test-slow check format mypy setup-ci dist
