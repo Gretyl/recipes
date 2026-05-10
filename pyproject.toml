@@ -1,6 +1,6 @@
 [project]
 name = "recipes"
-version = "1.1.1"
+version = "1.2.0"
 description = "My take on Recipes"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -66,3 +66,6 @@ exclude = ["cookbook/"]
 
 [tool.ruff.lint]
 select = ["SIM", "PIE", "RET", "C90", "C4", "N", "PLW", "PLC"]
+
+[tool.uv]
+exclude-newer = "2026-05-03T00:00:00Z"
