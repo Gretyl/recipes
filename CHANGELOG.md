@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-10
+
 ### Added
 
 - Initial `narrative-game` cookbook template for Twine 3 narrative games. Baked projects scaffold a Twee 3 source tree (`StoryData`, `StoryTitle`, `StoryStylesheet`, `StoryScript`, `StoryInit`, `Start`) compiled to a single self-contained HTML by the `tweego` Go binary; SugarCube is the default story format with Harlowe, Chapbook, and Snowman selectable. The bake includes authoring crib-sheets at `examples/{dark-room,paperclips,choice-fiction}.twee` for *A Dark Room*-style found-UI clickers, *Universal Paperclips*-style numerical clickers, and IFComp-style choice fiction. The baked Makefile detects system tweego with `setup-twine` falling back to a project-local install via `scripts/install-tweego.sh` (idempotent, platform-aware via `uname`); `make test` chains `setup-twine → dist → pytest` under a rodney-driven headless-Chrome smoke. `post_gen_project.py` mints a fresh UUID4 IFID when the cookiecutter prompt is left blank. Walkthrough with screenshots in `cookbook/demos/narrative-game.md`; design notes in `cookbook/notes/narrative-game.md`.
